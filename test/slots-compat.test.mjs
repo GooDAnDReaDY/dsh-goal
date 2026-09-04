@@ -1,14 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 const clientSource = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8');
 
-test('client.js registers into conversation.session.header with defensive try/catch', () => {
+test('client.js registers into conversation.session.header.utilities with defensive try/catch', () => {
   assert.ok(
-    clientSource.includes('conversation.session.header'),
-    'Client bundle must register into rc.1 slot conversation.session.header',
+    clientSource.includes('conversation.session.header.utilities'),
+    'Client bundle must register into extension slot conversation.session.header.utilities',
+  );
+
+  // Must NOT register into core-owned conversation.session.header slot
+  const lines = clientSource.split('\n');
+  const registersSessionHeaderDirectly = lines.some(
+    (line) => line.includes("'conversation.session.header'") && !line.includes('.utilities'),
+  );
+  assert.equal(
+    registersSessionHeaderDirectly,
+    false,
+    'Client bundle must NOT register into conversation.session.header to avoid colliding with core chat header',
   );
 
   assert.ok(
@@ -18,7 +28,6 @@ test('client.js registers into conversation.session.header with defensive try/ca
 });
 
 test('client.js CSS uses clean DSH tokens without hardcoded fallback colors', () => {
-  // Disallow var(--..., #...) or var(--..., rgb...) in CSS_STYLES
   const hexFallbackRegex = /var\(--[a-zA-Z0-9_-]+,\s*#[0-9a-fA-F]+\)/g;
   const rgbFallbackRegex = /var\(--[a-zA-Z0-9_-]+,\s*rgba?\([^)]+\)\)/g;
 

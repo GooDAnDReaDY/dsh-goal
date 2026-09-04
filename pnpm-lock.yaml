@@ -14,7 +14,6 @@ importers:
       '@deepseek-ai/dsh-host-webserver':
         specifier: ^0.1.0-rc.6
         version: 0.1.0-rc.8(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.0-rc.8(@deepseek-ai/cordis@4.0.2))
-    devDependencies:
       '@deepseek-ai/schemastery':
         specifier: ^3.18.1
         version: 3.18.2
