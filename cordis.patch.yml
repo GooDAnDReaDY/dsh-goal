@@ -1,0 +1,4 @@
+- insert:
+    - id: dsh-goal
+      name: '@goodandready/dsh-goal'
+      config: {}
