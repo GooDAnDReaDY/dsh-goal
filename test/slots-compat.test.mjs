@@ -51,6 +51,25 @@ test('client.js details modal displays plan of work without static 0/0 progress 
   );
 });
 
+test('client.js displays completed banner with checkmark and manual close button (Issue #18)', () => {
+  assert.ok(
+    clientSource.includes('goalCompleted: \'Цель выполнена\''),
+    'Russian locale must include goalCompleted label',
+  );
+  assert.ok(
+    clientSource.includes('closeBanner: \'Закрыть плашку цели\''),
+    'Russian locale must include closeBanner label',
+  );
+  assert.ok(
+    clientSource.includes('IconCheck'),
+    'IconCheck component must be defined for completed goal status',
+  );
+  assert.ok(
+    clientSource.includes('formatLiveElapsed'),
+    'GoalTopBanner must compute local live ticking elapsed time',
+  );
+});
+
 test('client.js CSS uses clean DSH tokens without hardcoded fallback colors', () => {
   const hexFallbackRegex = /var\(--[a-zA-Z0-9_-]+,\s*#[0-9a-fA-F]+\)/g;
   const rgbFallbackRegex = /var\(--[a-zA-Z0-9_-]+,\s*rgba?\([^)]+\)\)/g;
