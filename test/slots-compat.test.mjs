@@ -4,16 +4,16 @@ import { readFileSync } from 'node:fs';
 
 const clientSource = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8');
 
-test('client.js registers into conversation.session.header.utilities with defensive try/catch', () => {
+test('client.js registers into conversation.input.dock with defensive try/catch', () => {
   assert.ok(
-    clientSource.includes('conversation.session.header.utilities'),
-    'Client bundle must register into extension slot conversation.session.header.utilities',
+    clientSource.includes('conversation.input.dock'),
+    'Client bundle must register into composer dock slot conversation.input.dock',
   );
 
   // Must NOT register into core-owned conversation.session.header slot
   const lines = clientSource.split('\n');
   const registersSessionHeaderDirectly = lines.some(
-    (line) => line.includes("'conversation.session.header'") && !line.includes('.utilities'),
+    (line) => line.includes("'conversation.session.header'") && !line.includes('.utilities') && !line.includes('.dock'),
   );
   assert.equal(
     registersSessionHeaderDirectly,

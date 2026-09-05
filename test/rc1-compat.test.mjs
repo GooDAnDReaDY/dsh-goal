@@ -112,5 +112,5 @@ test('client bundle declares rc.1 service inject and registers the settings card
   assert.equal(cardEntry[0].locale, 'dsh-goal');
   const injected = cardEntry[0].inject();
   assert.equal(injected.scope, scopeStub, 'card receives the bound settings scope');
-  assert.ok(registered.some(([opts]) => opts.name === 'conversation.session.header.utilities'), 'must register into conversation.session.header.utilities');
+  assert.ok(registered.some(([opts]) => opts.name === 'conversation.input.dock'), 'must register into conversation.input.dock');
 });
