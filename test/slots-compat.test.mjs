@@ -27,6 +27,30 @@ test('client.js registers into conversation.input.dock with defensive try/catch'
   );
 });
 
+test('client.js does not contain dead registration to non-existent conversation.header.utilities slot (Issue #14)', () => {
+  assert.equal(
+    clientSource.includes('conversation.header.utilities'),
+    false,
+    'Dead registration to conversation.header.utilities must be removed',
+  );
+});
+
+test('client.js details modal displays plan of work without static 0/0 progress bar (Issue #16)', () => {
+  assert.ok(
+    clientSource.includes("milestones: 'План работ:'"),
+    'Milestones label should be "План работ:" in Russian locale',
+  );
+  assert.ok(
+    clientSource.includes("noMilestones: 'Агент формирует план работ...'"),
+    'Empty milestones label should be "Агент формирует план работ..."',
+  );
+  assert.equal(
+    clientSource.includes('dsh-goal-progress-fill'),
+    false,
+    'Progress bar element should be removed from details modal',
+  );
+});
+
 test('client.js CSS uses clean DSH tokens without hardcoded fallback colors', () => {
   const hexFallbackRegex = /var\(--[a-zA-Z0-9_-]+,\s*#[0-9a-fA-F]+\)/g;
   const rgbFallbackRegex = /var\(--[a-zA-Z0-9_-]+,\s*rgba?\([^)]+\)\)/g;
