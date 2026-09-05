@@ -1,61 +1,143 @@
-# @goodandready/dsh-goal
+# 📦 @goodandready/dsh-goal
 
-> **Goal Mode & Autonomous Execution Plugin for DeepSeek Harness (DSH)**
+<div align="center">
 
-`dsh-goal` adds an autonomous goal-tracking loop with a sticky top status banner, milestone decomposition, live timer, and interactive controls (pause, resume, cancel, modal details).
+<h3>Autonomous Goal Execution & Multi-Turn Task Tracking Engine with Sticky Header for DeepSeek Harness</h3>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@goodandready/dsh-goal"><img src="https://img.shields.io/npm/v/@goodandready/dsh-goal.svg?style=for-the-badge&color=6366f1&labelColor=1e1b4b" alt="npm version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/GooDAnDReaDY/dsh-goal.svg?style=for-the-badge&color=10b981&labelColor=064e3b" alt="license"></a>
+  <a href="https://github.com/topics/dsh-plugin"><img src="https://img.shields.io/badge/DSH-Plugin-8b5cf6.svg?style=for-the-badge&labelColor=2e1065" alt="DSH Plugin"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node-20%2B-f59e0b.svg?style=for-the-badge&labelColor=451a03" alt="Node version"></a>
+</p>
+
+<!-- Author Showcase Link -->
+<p align="center">
+  <a href="https://goodandready.app/"><img src="https://img.shields.io/badge/All_Author_Projects-goodandready.app-ff4500.svg?style=for-the-badge&logo=rocket&logoColor=white&labelColor=1a1a2e" alt="GoodAndReady Showcase"></a>
+</p>
+
+<p align="center">
+  <a href="README.md"><b>🇬🇧 English</b></a> •
+  <a href="docs/README.ru.md"><b>🇷🇺 Русский</b></a> •
+  <a href="docs/README.zh.md"><b>🇨🇳 中文说明</b></a>
+</p>
+
+</div>
 
 ---
 
-## Features
+## ⚡ Overview & The Problem
 
-- 🎯 **Sticky Top Goal Banner**: Minimalist header pinned above the chat showing the active goal, elapsed timer (`• 2s`, `• 1m 45s`), and controls.
-- ⏸️ **Play / Pause / Cancel**: Instantly halt autonomous multi-turn loops or resume whenever ready.
-- ⛶ **Milestone Modal Drawer**: Interactive checklist of sub-tasks with progress bar and execution logs.
-- 🤖 **Agent Tools**:
-  - `goal_set_milestones`: Autonomous breakdown of high-level goals into step-by-step tasks.
-  - `goal_update_progress`: Step-by-step milestone completion tracking.
-  - `goal_finish`: Goal completion with deliverable summary.
-- ⚙️ **Safety Limit & Settings**: Max iterations guardrail to prevent infinite agent loops.
-- 🌐 **Bilingual**: Full English and Russian localization.
+Complex engineering tasks require multi-step autonomy: decomposing high-level objectives into milestones, executing successive iterations without manual user re-prompting, and maintaining clear visibility into task progress.
+
+**`@goodandready/dsh-goal`** brings autonomous goal execution to DeepSeek Harness via the `/goal` command:
+* 🎯 **Sticky Top Goal Banner**: Pinned status header with live timer (`• 2s`, `• 1m 45s`), active goal title, and interactive control buttons.
+* ⏸️ **Play / Pause / Cancel**: Instantly pause the autonomous loop or resume execution on demand.
+* 📋 **Milestone Breakdown Drawer**: Interactive checklist showing sub-tasks, percentage completion, and iteration logs.
+* 🤖 **Autonomous Agent Tools**: Provides `goal_set_milestones`, `goal_update_progress`, and `goal_finish` tools directly to the agent.
+* 🛡️ **Safety Guardrails**: Configurable `maxIterations` limit to prevent runaway loops.
 
 ---
 
-## Installation
+## 🏛️ Architecture
 
-```bash
-dsh plugin add @goodandready/dsh-goal
+```mermaid
+graph TD
+    subgraph Input ["User Interaction"]
+        Cmd["Slash Command: /goal &lt;objective&gt;"]
+        API["REST API: POST /dsh-goal/action"]
+    end
+
+    subgraph GoalEngine ["Goal Lifecycle Engine (lib/index.js)"]
+        State["State Manager (IDLE, RUNNING, PAUSED, COMPLETED)"]
+        Milestones["Milestone Tracker & Decomposition"]
+        Disk["Persistence Store (~/.dsh/goal-state.json)"]
+    end
+
+    subgraph AgentLoop ["Autonomous Agent Drive"]
+        ToolSet["goal_set_milestones"]
+        ToolProgress["goal_update_progress"]
+        ToolFinish["goal_finish"]
+        LimitGuard{"maxIterations Guard"}
+    end
+
+    subgraph UI ["DSH Web Interface"]
+        Banner["Sticky Top Goal Banner"]
+        Timer["Live Elapsed Timer"]
+        Drawer["Milestone Checklist Modal"]
+        Settings["Settings Card (Schemastery)"]
+    end
+
+    Cmd --> GoalEngine
+    API --> GoalEngine
+    GoalEngine --> State
+    State --> Disk
+    State --> Banner
+    State --> Drawer
+    GoalEngine --> AgentLoop
+    AgentLoop --> LimitGuard
+    ToolSet --> GoalEngine
+    ToolProgress --> GoalEngine
+    ToolFinish --> GoalEngine
 ```
 
-Requires DeepSeek Harness core **0.1.2-rc.1** or newer: the client half declares no external client modules (`dsh.client.inject: []`) because `slots` / `locale` / `settingsScope` are kernel services in rc.1, and plugin settings are registered through a schemastery schema.
+---
 
-## Settings
+## 📦 Installation
 
-Settings live in the plugin card under **Settings → Plugins → Plugin settings** ("Goal Mode & Autonomous Loop"). The card reads the live settings snapshot (and renders nothing while the namespace is not `ready`) and saves only changed fields; a failed write keeps your drafts on screen.
+```bash
+dsh plugin --profile web add @goodandready/dsh-goal
+```
 
-| Field | Type | Default | Purpose |
-|---|---|---|---|
-| `maxIterations` | number | `25` | Safety limit: max autonomous iterations per goal |
-| `autoDrive` | boolean | `true` | Keep the autonomous loop running after each turn |
-| `enableSound` | boolean | `true` | Play a sound when a goal completes |
-
-Settings namespace: `dsh-goal`.
-
-## Quick Start
-
-1. Start a goal in chat:
-   ```text
-   /goal Refactor auth tokens and write integration tests
-   ```
-2. Or use the REST API:
-   ```bash
-   curl -X POST http://localhost:3080/dsh-goal/action \
-     -H "Content-Type: application/json" \
-     -d '{"action":"start","title":"Optimize database queries"}'
-   ```
-3. Watch the sticky top banner update with live timer and milestones in real-time.
+Restart your DeepSeek Harness instance and refresh the browser.
 
 ---
 
-## License
+## 💬 Usage & Quick Start
 
-MIT © [goodandready](https://goodandready.app)
+Start a goal directly in chat:
+
+```text
+/goal Refactor the authentication middleware and add integration tests
+```
+
+Or trigger via REST API:
+
+```bash
+curl -X POST http://localhost:3080/dsh-goal/action \
+  -H "Content-Type: application/json" \
+  -d '{"action":"start","title":"Optimize database queries"}'
+```
+
+---
+
+## ⚙️ Configuration Reference (`settings.yaml`)
+
+```yaml
+dsh-goal:
+  maxIterations: 25
+  autoDrive: true
+  enableSound: true
+```
+
+| Parameter | Type | Default | Description |
+|:---|:---|:---|:---|
+| `maxIterations` | `number` | `25` | Safety limit: maximum autonomous iterations per goal |
+| `autoDrive` | `boolean` | `true` | Keep the autonomous agent loop running between turns |
+| `enableSound` | `boolean` | `true` | Play completion audio chime when a goal finishes |
+
+---
+
+## 🧪 Testing
+
+Run the automated test suite:
+
+```bash
+npm test
+```
+
+---
+
+## 📄 License
+
+MIT © [GooDAnDReaDY](https://github.com/GooDAnDReaDY)
