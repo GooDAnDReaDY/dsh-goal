@@ -1,6 +1,6 @@
 {
   "name": "@goodandready/dsh-goal",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Goal mode & autonomous execution plugin for DeepSeek Harness with sticky top banner",
   "type": "module",
   "main": "./lib/index.js",
@@ -30,11 +30,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://192.168.1.111:3005/goodandready/dsh-goal.git"
+    "url": "https://github.com/GooDAnDReaDY/dsh-goal.git"
   },
-  "homepage": "http://192.168.1.111:3005/goodandready/dsh-goal",
+  "homepage": "https://github.com/GooDAnDReaDY/dsh-goal",
   "bugs": {
-    "url": "http://192.168.1.111:3005/goodandready/dsh-goal/issues"
+    "url": "https://github.com/GooDAnDReaDY/dsh-goal/issues"
   },
   "author": "goodandready",
   "license": "MIT",
