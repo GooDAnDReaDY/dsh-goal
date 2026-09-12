@@ -1,6 +1,6 @@
 {
   "name": "@goodandready/dsh-goal",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Goal mode & autonomous execution plugin for DeepSeek Harness with sticky top banner",
   "type": "module",
   "main": "./lib/index.js",
