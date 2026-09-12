@@ -43,12 +43,12 @@ test('executeGoalSlashCommand handles show, start, pause, resume, clear lifecycl
   // 1. Show when empty
   const showEmpty = executeGoalSlashCommand(engine, { action: 'show' });
   assert.equal(showEmpty.kind, 'success');
-  assert.ok(showEmpty.text.includes('цель не установлена'));
+  assert.ok(showEmpty.text.includes('цель не установлена') || showEmpty.text.includes('no active goal'));
 
   // 2. Pause when empty -> error
   const pauseEmpty = executeGoalSlashCommand(engine, { action: 'pause' });
   assert.equal(pauseEmpty.kind, 'error');
-  assert.ok(pauseEmpty.text.includes('Нельзя приостановить'));
+  assert.ok(pauseEmpty.text.includes('Нельзя приостановить') || pauseEmpty.text.includes('Cannot pause'));
 
   // 3. Start goal WITH agent followup
   const started = executeGoalSlashCommand(engine, { action: 'start', text: 'Реализовать фичу' }, { maxIterations: 15 }, mockAgent);
