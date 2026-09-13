@@ -51,6 +51,7 @@
 * 🔘 **快速启动按钮（v0.1.8 新增）**：常驻于输入框上方的启动按钮，支持弹窗一键制定目标，可在设置中自由开关。
 * 📊 **Token 消耗统计与 Markdown 导出（v0.1.7 新增）**：实时累计提示词、生成词及总 Token 消耗，支持一键复制完整 Markdown 报告。
 * 🤖 **智能体自主协作工具**：向智能体直接提供 `goal_set_milestones`、`goal_update_progress` 和 `goal_finish` 工具。
+* 🔄 **DSH 核心目标工具无缝拦截与兼容 (*v0.1.10 新增*)**: 为使用原生 DSH 目标控制指令的模型提供完美向下兼容，透明接管 `update_goal`、`get_goal`、`create_goal`。拦截并处理 `complete`、`pause`、`resume`、`edit`、`blocked` 等操作，彻底解决原生工具抛出的 `complete and blocked require a direct human turn` 权限崩溃错误，所有状态直接同步至 GoalEngine。
 * 🛡️ **安全防护机制**：支持自定义最大迭代次数（`maxIterations`）以及智能卡顿检测（Smart Progress Guard）。
 * 🔔 **Web Audio 提示音**：任务完成或失败时，通过 Web Audio API 播放舒缓的合成音效。
 
