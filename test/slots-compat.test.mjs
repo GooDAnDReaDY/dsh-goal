@@ -37,12 +37,16 @@ test('client.js does not contain dead registration to non-existent conversation.
 
 test('client.js details modal displays plan of work without static 0/0 progress bar (Issue #16)', () => {
   assert.ok(
-    clientSource.includes("milestones: 'План работ:'"),
-    'Milestones label should be "План работ:" in Russian locale',
+    clientSource.includes("milestones: 'Plan of work:'"),
+    'Milestones label should be "Plan of work:" in English locale',
   );
   assert.ok(
-    clientSource.includes("noMilestones: 'Агент формирует план работ...'"),
-    'Empty milestones label should be "Агент формирует план работ..."',
+    clientSource.includes("milestones: '工作计划：'"),
+    'Milestones label should be "工作计划：" in Chinese locale',
+  );
+  assert.ok(
+    clientSource.includes("noMilestones: 'Agent is preparing the plan of work...'"),
+    'Empty milestones label should be in English locale',
   );
   assert.equal(
     clientSource.includes('dsh-goal-progress-fill'),
@@ -53,12 +57,16 @@ test('client.js details modal displays plan of work without static 0/0 progress 
 
 test('client.js displays completed banner with checkmark and manual close button (Issue #18)', () => {
   assert.ok(
-    clientSource.includes('goalCompleted: \'Цель выполнена\''),
-    'Russian locale must include goalCompleted label',
+    clientSource.includes("goalCompleted: 'Goal completed'"),
+    'English locale must include goalCompleted label',
   );
   assert.ok(
-    clientSource.includes('closeBanner: \'Закрыть плашку цели\''),
-    'Russian locale must include closeBanner label',
+    clientSource.includes("goalCompleted: '目标已完成'"),
+    'Chinese locale must include goalCompleted label',
+  );
+  assert.ok(
+    clientSource.includes("closeBanner: 'Close goal banner'"),
+    'English locale must include closeBanner label',
   );
   assert.ok(
     clientSource.includes('IconCheck'),
@@ -81,9 +89,13 @@ test('client.js CSS uses clean DSH tokens without hardcoded fallback colors', ()
   assert.deepEqual(rgbMatches, [], `Found hardcoded rgb fallbacks in CSS tokens: ${rgbMatches.join(', ')}`);
 });
 
-test('client.js uses Отменить правки for discard button in Russian locale', () => {
+test('client.js uses Discard changes for discard button in English and Chinese locale', () => {
   assert.ok(
-    clientSource.includes("discard: 'Отменить правки'"),
-    'Discard button label in Russian locale must be "Отменить правки"',
+    clientSource.includes("discard: 'Discard changes'"),
+    'Discard button label in English locale must be "Discard changes"',
+  );
+  assert.ok(
+    clientSource.includes("discard: '放弃更改'"),
+    'Discard button label in Chinese locale must be "放弃更改"',
   );
 });
