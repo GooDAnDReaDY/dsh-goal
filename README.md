@@ -44,6 +44,12 @@ Complex engineering tasks require multi-step autonomy: decomposing high-level ob
 Without an autonomous tracking framework, agents can lose context across turns, stall in passive loops, or fail to notify users when complex workflows stall.
 
 **`@goodandready/dsh-goal`** introduces Goal Mode to DeepSeek Harness:
+* 💡 **Live Steering & Nudge (*Added in v0.2.0*)**: Dynamically clarify, amend, or guide the agent's active objective on the fly without aborting the loop.
+* 🔔 **Native Browser Notifications (*Added in v0.2.0*)**: Zero-dependency desktop push notifications via HTML5 `Notification API` when long-running goals complete or require attention.
+* 📑 **10 Quick Launch Presets (*Added in v0.2.0*)**: Ready-to-use engineering prompt chips (Fix Bug, Refactor YAGNI, Tests & Coverage, Code Review, Security Audit, New Feature, Docs, Upgrade Deps, Dead Code Cleanup, Performance).
+* 🛡️ **Tool-Failure Breaker (*Added in v0.2.0*)**: Configurable consecutive tool error limit (`consecutiveToolFailureLimit`, default: 3) to halt loops upon repetitive tool crashes and prevent token burn.
+* 📌 **Git Checkpoint Snapshot (*Added in v0.2.0*)**: Automatically captures start commit hash (`git rev-parse --short HEAD`) with 1-click `git diff` / rollback command in details modal.
+* 🐙 **GitHub & Gitea PR Comment Export (*Added in v0.2.0*)**: One-click formatted comment generator with collapsible `<details><summary>` milestone cards and token telemetry.
 * 🎯 **Sticky Top Goal Banner**: Pinned header over composer dock with live elapsed timer (`• 2s`, `• 1m 45s`), real-time status badge (`RUNNING`, `PAUSED`, `COMPLETED`), active goal title, and control actions.
 * ⏸️ **Play / Pause / Resume / Cancel**: Instantly pause the autonomous loop or resume execution on demand via buttons or `/goal` command.
 * 📋 **Milestone Breakdown & ETA**: Interactive checklist showing sub-tasks, completion status (`pending`, `in_progress`, `completed`, `failed`), progress bar, and dynamic completion ETA.
@@ -194,6 +200,8 @@ dsh-goal:
   autoDrive: true
   enableSound: true
   showQuickLaunchButton: true
+  consecutiveToolFailureLimit: 3
+  enableBrowserNotifications: true
 ```
 
 | Parameter | Type | Default | Description |
@@ -202,6 +210,8 @@ dsh-goal:
 | `autoDrive` | `boolean` | `true` | Keep the autonomous agent loop running between turns |
 | `enableSound` | `boolean` | `true` | Play audio chime when a goal completes or fails |
 | `showQuickLaunchButton` | `boolean` | `true` | Show the quick launch goal button above the composer dock |
+| `consecutiveToolFailureLimit` | `number` | `3` | Auto-pause goal if N consecutive turns hit tool execution errors (0 to disable) |
+| `enableBrowserNotifications` | `boolean` | `true` | Show native desktop push notifications on goal completion or failure |
 
 ---
 
