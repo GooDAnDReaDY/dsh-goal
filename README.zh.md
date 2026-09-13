@@ -193,6 +193,8 @@ dsh-goal:
   autoDrive: true
   enableSound: true
   showQuickLaunchButton: true
+| `consecutiveToolFailureLimit` | `number` | `3` | 连续 N 轮工具错误自动熔断暂停（0 为禁用） |
+| `enableBrowserNotifications` | `boolean` | `true` | 目标完成时发送桌面原生系统通知 |
 ```
 
 | 参数项 | 类型 | 默认值 | 说明 |
