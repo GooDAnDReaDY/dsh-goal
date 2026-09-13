@@ -51,6 +51,7 @@ Without an autonomous tracking framework, agents can lose context across turns, 
 * 🔘 **Quick Launch Button (*Added in v0.1.8*)**: Fast goal launcher docked above the message input with instant objective prompt modal. Toggleable in settings.
 * 📊 **Token Usage Tracking & Markdown Export (*Added in v0.1.7*)**: Accumulated prompt, completion, and total tokens tracked per session with one-click Markdown summary export.
 * 🤖 **Autonomous Agent Contract**: Provides `goal_set_milestones`, `goal_update_progress`, and `goal_finish` tools directly to the agent.
+* 🔄 **Core DSH Goal Tools Interception (*Added in v0.1.10*)**: Seamless drop-in compatibility for models calling built-in DSH goal tools (`update_goal`, `get_goal`, `create_goal`). Intercepts actions (`complete`, `pause`, `resume`, `edit`, `blocked`), bypasses rigid authority restrictions that caused crashes (`complete and blocked require a direct human turn`), and routes all state updates directly to GoalEngine.
 * 🛡️ **Safety Guardrails**: Configurable `maxIterations` safety limit and Smart Progress Guard to catch and pause idle turns without progress.
 * 🔔 **Web Audio Chimes**: Pleasant synthesized audio feedback on goal completion or failure via Web Audio API.
 
@@ -121,6 +122,7 @@ Handles `/goal` commands and subcommands:
 * Subscribes to `turn/end` for zero-latency turn-to-turn auto-drive using `setImmediate`.
 * Listens to `approval/asked` to automatically pause goal when operator confirmation is needed.
 * Registers agent tools: `goal_set_milestones`, `goal_update_progress`, `goal_finish`.
+* Seamlessly shadows core DSH goal tools: `update_goal`, `get_goal`, `create_goal` with zero collision and full `GOAL_OUTPUT` schema compliance.
 
 ### 4. `lib/client.js` — Frontend Web UI
 * **Sticky Top Banner**: Mounts via slot `conversation.input.dock` with live timer, status badge, pause/resume, and details button.
