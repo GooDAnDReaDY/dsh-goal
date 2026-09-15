@@ -108,4 +108,29 @@ describe('i18n Language Detection and Multilingual Prompts', () => {
     const clearRes = executeGoalSlashCommand(engine, { action: 'clear' });
     assert.match(clearRes.text, /🎯 Цель сброшена/);
   });
+
+  test('executeGoalSlashCommand outputs Chinese messages for Chinese goals and commands', () => {
+    const engine = new GoalEngine();
+
+    // Start Chinese goal
+    const startRes = executeGoalSlashCommand(engine, { action: 'start', text: '实现报表导出功能' });
+    assert.match(startRes.text, /🎯 目标已激活: "实现报表导出功能"/);
+
+    // Show Chinese goal
+    const showRes = executeGoalSlashCommand(engine, { action: 'show' });
+    assert.match(showRes.text, /🎯 目标: "实现报表导出功能"/);
+    assert.match(showRes.text, /状态: RUNNING/);
+
+    // Pause Chinese goal
+    const pauseRes = executeGoalSlashCommand(engine, { action: 'pause' });
+    assert.match(pauseRes.text, /⏸ 目标已暂停: "实现报表导出功能"/);
+
+    // Resume Chinese goal
+    const resumeRes = executeGoalSlashCommand(engine, { action: 'resume' });
+    assert.match(resumeRes.text, /▶️ 目标已恢复: "实现报表导出功能"/);
+
+    // Clear Chinese goal
+    const clearRes = executeGoalSlashCommand(engine, { action: 'clear' });
+    assert.match(clearRes.text, /🎯 目标已清除/);
+  });
 });
