@@ -2,10 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseNumberField, getFieldStatus, computeSavePlan, DEFAULT_SETTINGS } from '../lib/card-form-state.js';
 
+test('DEFAULT_SETTINGS contains all 7 canonical configuration fields', () => {
+  assert.equal(DEFAULT_SETTINGS.maxIterations, 25);
+  assert.equal(DEFAULT_SETTINGS.autoDrive, true);
+  assert.equal(DEFAULT_SETTINGS.enableSound, true);
+  assert.equal(DEFAULT_SETTINGS.showQuickLaunchButton, true);
+  assert.equal(DEFAULT_SETTINGS.consecutiveToolFailureLimit, 3);
+  assert.equal(DEFAULT_SETTINGS.enableBrowserNotifications, true);
+  assert.equal(DEFAULT_SETTINGS.storagePath, '');
+});
+
 test('parseNumberField parses positive integers, clears on empty string, rejects invalid', () => {
   assert.equal(parseNumberField('25'), 25);
   assert.equal(parseNumberField('1'), 1);
   assert.equal(parseNumberField(50), 50);
+
+  // min=0 allows 0
+  assert.equal(parseNumberField('0', 0), 0);
+  assert.ok(Number.isNaN(parseNumberField('0', 1)));
 
   // Empty string / null / undefined -> undefined (unset / reset override)
   assert.equal(parseNumberField(''), undefined);
@@ -13,16 +27,31 @@ test('parseNumberField parses positive integers, clears on empty string, rejects
   assert.equal(parseNumberField(undefined), undefined);
 
   // Invalid numbers -> NaN
-  assert.ok(Number.isNaN(parseNumberField('0')));
-  assert.ok(Number.isNaN(parseNumberField('-5')));
+  assert.ok(Number.isNaN(parseNumberField('-5', 0)));
   assert.ok(Number.isNaN(parseNumberField('abc')));
   assert.ok(Number.isNaN(parseNumberField('12.34')));
 });
 
 test('getFieldStatus computes status, dirty, invalid and overridden flags accurately', () => {
   const baseSnap = {
-    value: { maxIterations: 25, autoDrive: true, enableSound: true },
-    base: { maxIterations: 25, autoDrive: true, enableSound: true },
+    value: {
+      maxIterations: 25,
+      autoDrive: true,
+      enableSound: true,
+      showQuickLaunchButton: true,
+      consecutiveToolFailureLimit: 3,
+      enableBrowserNotifications: true,
+      storagePath: '',
+    },
+    base: {
+      maxIterations: 25,
+      autoDrive: true,
+      enableSound: true,
+      showQuickLaunchButton: true,
+      consecutiveToolFailureLimit: 3,
+      enableBrowserNotifications: true,
+      storagePath: '',
+    },
     user: {},
   };
 
@@ -44,7 +73,12 @@ test('getFieldStatus computes status, dirty, invalid and overridden flags accura
   assert.equal(statusModified.invalid, false);
   assert.equal(statusModified.isDirty, true);
 
-  // 4. Overridden field in user settings
+  // 4. consecutiveToolFailureLimit allows 0
+  const statusZero = getFieldStatus('consecutiveToolFailureLimit', '0', baseSnap);
+  assert.equal(statusZero.invalid, false);
+  assert.equal(statusZero.isDirty, true);
+
+  // 5. Overridden field in user settings
   const overriddenSnap = {
     value: { maxIterations: 50, autoDrive: false, enableSound: true },
     base: { maxIterations: 25, autoDrive: true, enableSound: true },
@@ -56,31 +90,52 @@ test('getFieldStatus computes status, dirty, invalid and overridden flags accura
   assert.equal(statusOverridden.isOverridden, true);
   assert.equal(statusOverridden.isDirty, false);
 
-  // 5. Clearing an overridden field via empty string resets override
+  // 6. Clearing an overridden field via empty string resets override
   const statusCleared = getFieldStatus('maxIterations', '', overriddenSnap);
   assert.equal(statusCleared.invalid, false);
   assert.equal(statusCleared.isDirty, true);
 });
 
-test('computeSavePlan generates correct writes for changes and unsets', () => {
+test('computeSavePlan generates correct writes for changes and unsets across all fields', () => {
   const snap = {
-    value: { maxIterations: 50, autoDrive: false, enableSound: true },
-    base: { maxIterations: 25, autoDrive: true, enableSound: true },
-    user: { maxIterations: 50, autoDrive: false },
+    value: {
+      maxIterations: 50,
+      autoDrive: false,
+      enableSound: true,
+      consecutiveToolFailureLimit: 5,
+      enableBrowserNotifications: true,
+      storagePath: '/custom/path',
+    },
+    base: {
+      maxIterations: 25,
+      autoDrive: true,
+      enableSound: true,
+      consecutiveToolFailureLimit: 3,
+      enableBrowserNotifications: true,
+      storagePath: '',
+    },
+    user: {
+      maxIterations: 50,
+      autoDrive: false,
+      consecutiveToolFailureLimit: 5,
+      storagePath: '/custom/path',
+    },
   };
 
-  // Draft with maxIterations cleared (reset to base) and autoDrive set to true (base)
   const draft = {
     maxIterations: '',
     autoDrive: true,
-    enableSound: true,
+    consecutiveToolFailureLimit: '0',
+    enableBrowserNotifications: false,
+    storagePath: '',
   };
 
   const writes = computeSavePlan(draft, snap);
-  // maxIterations: undefined (to unset override)
-  // autoDrive: true
   assert.deepEqual(writes, [
     ['maxIterations', undefined],
     ['autoDrive', true],
+    ['consecutiveToolFailureLimit', 0],
+    ['enableBrowserNotifications', false],
+    ['storagePath', undefined],
   ]);
 });

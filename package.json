@@ -1,6 +1,6 @@
 {
   "name": "@goodandready/dsh-goal",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Autonomous Goal Execution & Multi-Turn Task Tracking Engine with Sticky Header for DeepSeek Harness",
   "type": "module",
   "main": "./lib/index.js",
@@ -11,13 +11,13 @@
     "./cordis.patch.yml": "./cordis.patch.yml"
   },
   "files": [
-    "lib/",
-    "cordis.patch.yml",
+    "lib",
+    "package.json",
     "README.md",
     "README.ru.md",
     "README.zh.md",
-    "LICENSE",
-    "docs/design/DESIGN.md"
+    "cordis.patch.yml",
+    "LICENSE"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs"
