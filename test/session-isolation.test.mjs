@@ -77,21 +77,21 @@ test('GoalEngine debounces writes and flushes cleanly on flushSync', async () =>
 });
 
 test('formatGoalStartPrompt and getStatePromptInjection enforce strict step-1 contract', () => {
-  const startPrompt = formatGoalStartPrompt('Создать модуль авторизации');
-  assert.ok(startPrompt.includes('ОБЯЗАТЕЛЬНЫЙ ШАГ №1'), 'Must include mandatory step 1 directive');
+  const startPrompt = formatGoalStartPrompt('Create authorization module');
+  assert.ok(startPrompt.includes('MANDATORY STEP 1'), 'Must include mandatory step 1 directive');
   assert.ok(startPrompt.includes('goal_set_milestones'), 'Must demand goal_set_milestones');
   assert.ok(startPrompt.includes('goal_update_progress'), 'Must instruct goal_update_progress');
   assert.ok(startPrompt.includes('goal_finish'), 'Must instruct goal_finish');
 
   const engine = new GoalEngine({ storagePath: null });
-  engine.startGoal('Починить баг', {}, 'session-strict');
+  engine.startGoal('Fix security bug', {}, 'session-strict');
   const injectionEmpty = engine.getStatePromptInjection('session-strict');
-  assert.ok(injectionEmpty.includes('ТВОЙ ПЕРВЫЙ ШАГ: Немедленно вызови инструмент goal_set_milestones'));
+  assert.ok(injectionEmpty.includes('YOUR FIRST STEP: Immediately call tool goal_set_milestones'));
 
-  engine.addMilestones(['Найти причину', 'Исправить'], true, 'session-strict');
+  engine.addMilestones(['Find root cause', 'Apply patch'], true, 'session-strict');
   const injectionWithPlan = engine.getStatePromptInjection('session-strict');
-  assert.ok(injectionWithPlan.includes('1. [PENDING] Найти причину'));
-  assert.ok(injectionWithPlan.includes('2. [PENDING] Исправить'));
+  assert.ok(injectionWithPlan.includes('1. [PENDING] Find root cause'));
+  assert.ok(injectionWithPlan.includes('2. [PENDING] Apply patch'));
 });
 
 test('WebServer routes and coordinator isolate goals by sessionId', async () => {

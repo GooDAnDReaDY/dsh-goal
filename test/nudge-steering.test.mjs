@@ -42,13 +42,13 @@ test('GoalEngine.getStatePromptInjection embeds pendingNudge and consumes it', (
   assert.equal(engine.getSnapshot('sid-inj').pendingNudge, null);
 });
 
-test('GoalEngine.getStatePromptInjection Russian localization for steering', () => {
+test('GoalEngine.getStatePromptInjection Chinese localization for steering', () => {
   const engine = new GoalEngine();
-  engine.startGoal('Тест локализации подсказки', { lang: 'ru' }, 'sid-ru');
+  engine.startGoal('测试提示词本地化', { lang: 'zh' }, 'sid-zh');
 
-  engine.nudge('Сначала сделай рефакторинг хелпера', 'sid-ru');
+  engine.nudge('首先重构辅助函数', 'sid-zh');
 
-  const prompt = engine.getStatePromptInjection('sid-ru');
-  assert.match(prompt, /СРОЧНОЕ УТОЧНЕНИЕ \/ НАПРАВЛЕНИЕ ОТ ПОЛЬЗОВАТЕЛЯ/);
-  assert.match(prompt, /Сначала сделай рефакторинг хелпера/);
+  const prompt = engine.getStatePromptInjection('sid-zh');
+  assert.match(prompt, /用户紧急补充说明 \/ 调整方向/);
+  assert.match(prompt, /首先重构辅助函数/);
 });
