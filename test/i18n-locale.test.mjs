@@ -1,19 +1,21 @@
-import { test, describe, beforeEach } from 'node:test';
+import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { GoalEngine, GoalState, detectLanguage } from '../lib/goal-engine.js';
 import { formatGoalStartPrompt, executeGoalSlashCommand, parseGoalInput } from '../lib/command-handler.js';
 
-describe('i18n Language Detection and Multilingual Prompts', () => {
-  test('detectLanguage detects ru, zh, and en correctly', () => {
-    assert.equal(detectLanguage('Создать новый компонент'), 'ru');
-    assert.equal(detectLanguage('Настроить экспорт'), 'ru');
+describe('i18n Language Detection and Multilingual Prompts (en & zh only)', () => {
+  test('detectLanguage detects zh and en correctly', () => {
     assert.equal(detectLanguage('实现报表导出功能'), 'zh');
     assert.equal(detectLanguage('添加测试用例'), 'zh');
     assert.equal(detectLanguage('Implement export and cover with tests'), 'en');
     assert.equal(detectLanguage('Add balance to top left corner'), 'en');
     assert.equal(detectLanguage('12345'), 'en');
     assert.equal(detectLanguage(null), 'en');
-    assert.equal(detectLanguage('', 'ru'), 'ru');
+    assert.equal(detectLanguage('', 'en'), 'en');
+    assert.equal(detectLanguage('Non-Chinese characters fallback to en'), 'en');
   });
 
   test('GoalEngine stores lang and generates localized prompt injection', () => {
@@ -28,28 +30,27 @@ describe('i18n Language Detection and Multilingual Prompts', () => {
     assert.match(promptEn, /Elapsed Time:/);
     assert.match(promptEn, /Work Plan:/);
     assert.match(promptEn, /YOUR FIRST STEP: Immediately call tool goal_set_milestones/);
-    assert.doesNotMatch(promptEn, /Цель:/);
 
-    // Russian goal
-    const snapRu = engine.startGoal('Добавить баланс пользователя в верхний левый угол', {}, 'ru-session');
-    assert.equal(snapRu.lang, 'ru');
-    const promptRu = engine.getStatePromptInjection('ru-session');
-    assert.match(promptRu, /Цель: "Добавить баланс пользователя в верхний левый угол"/);
-    assert.match(promptRu, /Время работы:/);
-    assert.match(promptRu, /План работ:/);
-    assert.match(promptRu, /ТВОЙ ПЕРВЫЙ ШАГ: Немедленно вызови инструмент goal_set_milestones/);
+    // Chinese goal
+    const snapZh = engine.startGoal('在屏幕左上角添加用户余额组件', {}, 'zh-session');
+    assert.equal(snapZh.lang, 'zh');
+    const promptZh = engine.getStatePromptInjection('zh-session');
+    assert.match(promptZh, /目标: "在屏幕左上角添加用户余额组件"/);
+    assert.match(promptZh, /运行时间:/);
+    assert.match(promptZh, /工作计划:/);
+    assert.match(promptZh, /第一步核心指令: 立即调用 goal_set_milestones/);
   });
 
-  test('formatGoalStartPrompt produces English contract for English and Russian for Russian', () => {
+  test('formatGoalStartPrompt produces English contract for English and Chinese for Chinese', () => {
     const promptEn = formatGoalStartPrompt('Add balance widget');
     assert.match(promptEn, /🎯 Goal Mode activated: "Add balance widget"/);
     assert.match(promptEn, /STRICT AUTONOMOUS CONTRACT:/);
     assert.match(promptEn, /MANDATORY STEP 1:/);
 
-    const promptRu = formatGoalStartPrompt('Добавить виджет баланса');
-    assert.match(promptRu, /🎯 Активирован режим цели \(Goal Mode\): "Добавить виджет баланса"/);
-    assert.match(promptRu, /СТРОГИЙ КОНТРАКТ АВТОНОМНОГО РЕЖИМА:/);
-    assert.match(promptRu, /ОБЯЗАТЕЛЬНЫЙ ШАГ №1:/);
+    const promptZh = formatGoalStartPrompt('添加余额组件');
+    assert.match(promptZh, /🎯 目标模式已激活 \(Goal Mode\): "添加余额组件"/);
+    assert.match(promptZh, /自主执行契约：/);
+    assert.match(promptZh, /第一步必选动作：/);
   });
 
   test('executeGoalSlashCommand outputs English messages for English goals and commands', () => {
@@ -84,31 +85,6 @@ describe('i18n Language Detection and Multilingual Prompts', () => {
     assert.match(clearRes.text, /🎯 Goal cleared/);
   });
 
-  test('executeGoalSlashCommand outputs Russian messages for Russian goals and commands', () => {
-    const engine = new GoalEngine();
-
-    // Start Russian goal
-    const startRes = executeGoalSlashCommand(engine, { action: 'start', text: 'Развернуть новый сервис' });
-    assert.match(startRes.text, /🎯 Активирована цель: «Развернуть новый сервис»/);
-
-    // Show Russian goal
-    const showRes = executeGoalSlashCommand(engine, { action: 'show' });
-    assert.match(showRes.text, /🎯 Цель: «Развернуть новый сервис»/);
-    assert.match(showRes.text, /Статус: RUNNING/);
-
-    // Pause Russian goal
-    const pauseRes = executeGoalSlashCommand(engine, { action: 'pause' });
-    assert.match(pauseRes.text, /⏸ Цель приостановлена: «Развернуть новый сервис»/);
-
-    // Resume Russian goal
-    const resumeRes = executeGoalSlashCommand(engine, { action: 'resume' });
-    assert.match(resumeRes.text, /▶️ Цель возобновлена: «Развернуть новый сервис»/);
-
-    // Clear Russian goal
-    const clearRes = executeGoalSlashCommand(engine, { action: 'clear' });
-    assert.match(clearRes.text, /🎯 Цель сброшена/);
-  });
-
   test('executeGoalSlashCommand outputs Chinese messages for Chinese goals and commands', () => {
     const engine = new GoalEngine();
 
@@ -132,5 +108,29 @@ describe('i18n Language Detection and Multilingual Prompts', () => {
     // Clear Chinese goal
     const clearRes = executeGoalSlashCommand(engine, { action: 'clear' });
     assert.match(clearRes.text, /🎯 目标已清除/);
+  });
+
+  test('Regression Gate: lib/*.js contains zero hardcoded Cyrillic characters', () => {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const libDir = path.resolve(__dirname, '../lib');
+    const files = fs.readdirSync(libDir).filter((f) => f.endsWith('.js'));
+    const cyrillicRegex = /[\u0400-\u04FF]/;
+    const violations = [];
+
+    for (const file of files) {
+      const fullPath = path.join(libDir, file);
+      const lines = fs.readFileSync(fullPath, 'utf8').split('\n');
+      lines.forEach((line, idx) => {
+        if (cyrillicRegex.test(line)) {
+          violations.push(`${file}:${idx + 1}: ${line.trim()}`);
+        }
+      });
+    }
+
+    assert.equal(
+      violations.length,
+      0,
+      `Found hardcoded Cyrillic lines in lib/*.js (must be canonical en/zh only):\n${violations.join('\n')}`
+    );
   });
 });

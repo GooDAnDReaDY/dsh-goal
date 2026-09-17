@@ -225,6 +225,18 @@ npm test
 
 ---
 
+---
+
+## 📦 Release Notes
+
+### v0.2.3
+- **Auto-Updater**: Integrated one-click update API endpoint at `/api/dsh-goal/update` with fail-closed origin checks.
+- **Modular Architecture**: Decomposed server codebase into focused submodules (<600 lines each) for routes, tools, store, reports, and updater.
+- **Strict i18n Separation**: Purged hardcoded internal Russian strings/branches from `lib/*.js`; canonical English and Chinese core with Russian provided via `@goodandready/dsh-russian-lang`.
+- **Reliability & Resilience**: Eliminated all empty catch blocks, added contextual logging on deferred tool completions, and prune dead SSE streams on error.
+- **Design System Fidelity**: Replaced foreign CSS classes and hardcoded RGBA colors with native DSH theme design tokens (`--dsw-alias-*`).
+- **Settings Scope Protection**: Resolved null/loading status handling in the settings card to prevent false `ready` state.
+
 ## 📄 License
 
 MIT © [GooDAnDReaDY](https://github.com/GooDAnDReaDY)
