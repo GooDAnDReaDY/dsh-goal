@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { isTrustedUpdateRequest, isNewerVersion, registerPluginUpdater } from '../lib/updater.js';
+
+// The updater endpoint reports the version installed from package.json, so the test
+// tracks that file instead of hard-coding a release number.
+const pkgVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
 test('Plugin Updater: isNewerVersion handles semver and prereleases correctly', () => {
   assert.equal(isNewerVersion('0.2.2', '0.2.3'), true, '0.2.3 is newer than 0.2.2');
@@ -89,7 +94,7 @@ test('Plugin Updater: GET endpoint returns version payload and registers with ho
 
   const parsed = JSON.parse(body);
   assert.equal(parsed.packageName, '@goodandready/dsh-goal');
-  assert.equal(parsed.currentVersion, '0.2.3');
+  assert.equal(parsed.currentVersion, pkgVersion);
   assert.equal(typeof parsed.updateAvailable, 'boolean');
 
   // Test POST request without trusted headers -> 403
