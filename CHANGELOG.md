@@ -2,6 +2,15 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.5
+
+### Fixed
+- **Settings reachable again on the plugin's own page**: the current DSH core
+  (0.1.6-alpha.2) renders a plugin's configuration page only for entries registered
+  in the plugin-list seat `plugins.item`. `GoalSettingsCard` is now registered there
+  (`id: 'dsh-goal'`, order 60, static label) alongside the row seat and the legacy
+  card.
+
 ## 0.2.4
 
 ### Fixed
