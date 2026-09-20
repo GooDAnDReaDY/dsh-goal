@@ -202,6 +202,9 @@ dsh-goal:
   showQuickLaunchButton: true
   consecutiveToolFailureLimit: 3
   enableBrowserNotifications: true
+  maxTokenBudget: 0
+  budgetWarningThreshold: 80
+  autoCheckpointOnMilestone: false
 ```
 
 | Parameter | Type | Default | Description |
@@ -212,6 +215,9 @@ dsh-goal:
 | `showQuickLaunchButton` | `boolean` | `true` | Show the quick launch goal button above the composer dock |
 | `consecutiveToolFailureLimit` | `number` | `3` | Auto-pause goal if N consecutive turns hit tool execution errors (0 to disable) |
 | `enableBrowserNotifications` | `boolean` | `true` | Show native desktop push notifications on goal completion or failure |
+| `maxTokenBudget` | `number` | `0` | Safety token ceiling (0 = disabled); triggers soft-pause when exceeded |
+| `budgetWarningThreshold` | `number` | `80` | Percentage of budget consumed before warning model to wrap up |
+| `autoCheckpointOnMilestone` | `boolean` | `false` | Automatically create git snapshot commits upon milestone completion |
 
 ---
 
@@ -228,6 +234,13 @@ npm test
 ---
 
 ## 📦 Release Notes
+
+### v0.3.0
+- **Token Budget Guard**: Safety ceiling with proactive model guidance at threshold (default 80%) and soft pause (`PAUSED_BUDGET_EXCEEDED`) with 1-click +50k extension.
+- **Sub-milestones & Checklists**: Granular sub-tasks per milestone (`checklist: [{ text, done }]`) with real-time UI toggling and model prompt synchronization.
+- **Auto Git Checkpoints**: Optional automatic git snapshotting upon milestone completion with one-click rollback in the details modal.
+- **Run Artifact Export**: One-click export of structured execution runs to `.dsh/goals/<timestamp>-<slug>.md` (with `.dsh/` git-ignored).
+- **Compact Dock Mode**: Minimizable dock banner switching to sleek status pill, state persisted in `localStorage`.
 
 ### v0.2.3
 - **Auto-Updater**: Integrated one-click update API endpoint at `/api/dsh-goal/update` with fail-closed origin checks.
