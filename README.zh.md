@@ -224,6 +224,13 @@ MIT © [GooDAnDReaDY](https://github.com/GooDAnDReaDY)
 
 ## 📦 版本历史 (Release Notes)
 
+### v0.2.6
+- **Token 预算守护 (Token Budget Guard)**：设置安全使用上限，并在消耗达阈值（默认80%）时注入预警引导，达到100%时软暂停（`PAUSED_BUDGET_EXCEEDED`），支持一键延展 +50k 预算。
+- **子里程碑与检查清单 (Sub-milestones & Checklists)**：支持里程碑层级下的细分任务清单（`checklist: [{ text, done }]`），支持前端实时勾选及提示词自动同步。
+- **Git 自动检查点 (Auto Git Checkpoints)**：里程碑达成时可选自动生成快照提交，并在详情弹窗中支持一键回滚。
+- **执行成果导出 (Run Artifact Export)**：一键导出 Markdown 格式执行成果至 `.dsh/goals/<timestamp>-<slug>.md`（已添加 `.dsh/` 至 `.gitignore`）。
+- **紧凑面板模式 (Compact Dock Mode)**：输入栏固定面板可折叠为精巧胶囊状态栏，状态保存至 `localStorage`。
+
 ### v0.2.3
 - **自动更新**: 在 `/api/dsh-goal/update` 集成了一键更新 API 端点，并配备安全的原点验证。
 - **模块化架构**: 将服务端完整解耦为高内聚子模块（各模块均低于 600 行）：路由、工具、持久化存储、报告生成与更新器。
