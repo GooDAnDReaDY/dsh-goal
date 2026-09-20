@@ -224,7 +224,7 @@ MIT © [GooDAnDReaDY](https://github.com/GooDAnDReaDY)
 
 ## 📦 版本历史 (Release Notes)
 
-### v0.3.0
+### v0.2.6
 - **Token 预算守护 (Token Budget Guard)**：设置安全使用上限，并在消耗达阈值（默认80%）时注入预警引导，达到100%时软暂停（`PAUSED_BUDGET_EXCEEDED`），支持一键延展 +50k 预算。
 - **子里程碑与检查清单 (Sub-milestones & Checklists)**：支持里程碑层级下的细分任务清单（`checklist: [{ text, done }]`），支持前端实时勾选及提示词自动同步。
 - **Git 自动检查点 (Auto Git Checkpoints)**：里程碑达成时可选自动生成快照提交，并在详情弹窗中支持一键回滚。

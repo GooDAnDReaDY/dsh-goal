@@ -235,7 +235,7 @@ npm test
 
 ## 📦 Release Notes
 
-### v0.3.0
+### v0.2.6
 - **Token Budget Guard**: Safety ceiling with proactive model guidance at threshold (default 80%) and soft pause (`PAUSED_BUDGET_EXCEEDED`) with 1-click +50k extension.
 - **Sub-milestones & Checklists**: Granular sub-tasks per milestone (`checklist: [{ text, done }]`) with real-time UI toggling and model prompt synchronization.
 - **Auto Git Checkpoints**: Optional automatic git snapshotting upon milestone completion with one-click rollback in the details modal.
