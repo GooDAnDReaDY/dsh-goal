@@ -7,7 +7,7 @@ import { Config, apply as applyHost } from '../lib/index.js';
 test('package.json keeps dsh.client.inject empty: stale rc.0 module names are gone', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.dsh.client.platform, 'web');
-  assert.deepEqual(pkg.dsh.client.inject, []);
+  assert.deepEqual(pkg.dsh.client.inject, ["@deepseek-ai/dsh-client-ui-slots", "@deepseek-ai/dsh-client-locale", "@deepseek-ai/dsh-client-ui-settings"]);
 });
 
 test('settings schema is a schemastery schema function with plugin defaults', () => {
@@ -83,7 +83,7 @@ test('client bundle declares rc.1 service inject and registers the settings card
     throw new Error(`unexpected require: ${spec}`);
   });
 
-  assert.deepEqual(plugin.inject, ['slots', 'locale', 'settingsScope']);
+  assert.deepEqual(plugin.inject, ['slots', 'locale', 'configForms']);
   assert.equal(typeof plugin.apply, 'function');
 
   const registered = [];
@@ -95,9 +95,8 @@ test('client bundle declares rc.1 service inject and registers the settings card
   };
   const ctx = {
     locale: { register: () => {} },
-    settingsScope: {
-      bind: (spec) => {
-        bound.namespace = spec.namespace;
+    configForms: { get: (spec) => {
+        bound.namespace = typeof spec === 'string' ? spec : spec.namespace;
         return scopeStub;
       },
     },

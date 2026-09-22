@@ -2,6 +2,11 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.8
+
+### Fixed
+- Settings no longer wait on the removed settingsScope service. The client uses configForms (#80).
+
 ## 0.2.7
 
 ### Fixed
