@@ -2,10 +2,16 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.9
+
+### Fixed
+- **CSRF & Untrusted LAN Caller Guard (Fixes #78)**: Enforced `isTrustedCaller` origin check on `POST /dsh-goal/action`. Rejects LAN or cross-site requests missing trusted `Sec-Fetch-Site` or matching `Origin`/`Referer` headers with `403 Forbidden: untrusted caller origin`.
+- **Working Directory Boundary Confinement (Fixes #79)**: Restricted `getSafeCwd` to allowed workspace roots (`process.cwd()` and active goal `sessionGoal.cwd`). Rejects traversal attempts and directories outside the workspace boundary (e.g. `/tmp`) with `400 Bad Request`.
+
 ## 0.2.8
 
 ### Fixed
-- Settings no longer wait on the removed settingsScope service. The client uses configForms (#80).
+- **Settings configForms Migration (Fixes #80)**: Settings no longer wait on the removed `settingsScope` service; client uses native `configForms`.
 
 ## 0.2.7
 
