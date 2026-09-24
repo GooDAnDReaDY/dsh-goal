@@ -2,6 +2,20 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.10
+
+### Added
+- **Pause & Intervene (#83)**: Human-in-the-loop steering while goal is paused. Operators can inject directives (`userDirective`), adjust milestone notes/status, or reorder the execution plan directly from the details modal or via `/dsh-goal/action`. Resuming immediately injects the directive into the agent's prompt.
+- **Live Activity Mini-Feed (#84)**: Real-time, chronological execution activity stream tracking tool calls, milestone completions, git commits, and budget warnings. Displayed in the details modal with relative timestamps (`enableLiveActivityFeed`, default: `true`).
+- **Smart Goal Pre-planning (#85)**: Automated drafting of preliminary milestone breakdown prior to execution start (`enablePreplanning`, default: `true`). Allows reviewing and approving the structured work plan before agents begin executing turns.
+- **Auto-Branching Workflow (#86)**: Automatic isolated git feature branch creation upon starting a goal (`autoBranchOnGoalStart`, default: `true`). Includes one-click branch merge and discard controls upon goal completion or cancellation.
+- **Issue Checklist Sync (#87)**: Bi-directional synchronization with Gitea and GitHub issue markdown task lists (`- [ ]` / `- [x]`). Automatically updates issue checkboxes as corresponding milestones progress.
+- **Post-Goal Retrospective Card (#88)**: Comprehensive execution analytics card generated upon completion (`enablePostGoalRetrospective`, default: `true`), reporting duration, token cost, modified files count, tool call volume, error rates, and key findings.
+- **Smart Budget Auto-Scale (#89)**: Intelligent budget expansion when goals approach the token ceiling near completion (`autoScaleBudgetNearCompletion`, default: `false`). Automatically grants a one-time 20% token buffer if the goal is >= 75% complete or on its final milestone.
+- **Goal Templates Drawer (#90)**: Standard engineering goal template library (Quick Fix, Feature Implementation, Code Refactoring, Bug Reproduction, Comprehensive Audit, Security Hardening) with quick-launch chips and customizable milestone skeletons (`enableTemplatesDrawer`, default: `true`).
+- **Milestone Dependency Graph (#91)**: Explicit predecessor dependencies (`dependsOn: ['m-1']`) enforcing topological execution order. Prevents agent execution or completion of downstream milestones while prerequisites remain pending, with visual lock badges in the UI (`enableMilestoneDependencies`, default: `true`).
+- **Sound Scheme Customization & Web Speech Announcements (#92)**: Customizable audio notification schemes (`soundScheme`: `'default'` | `'minimal'` | `'retro'`) and optional browser voice announcements via the Web Speech API (`enableVoiceAnnouncements`, default: `false`).
+
 ## 0.2.9
 
 ### Fixed
