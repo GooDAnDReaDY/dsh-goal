@@ -2,6 +2,18 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.11
+
+### Security & Hardening
+- **Origin-Guarded Routes & SSE Stream (Fixes #78)**: Eliminated forgeable `Sec-Fetch-Site` trust on non-loopback requests. Protected `GET /dsh-goal/events` (SSE), `GET /dsh-goal/state`, and `GET /dsh-goal/templates` with `isTrustedCaller`, ensuring non-loopback callers must present matching `Origin` or `Referer` headers.
+- **Strict Workspace Confinement on Start (Fixes #79)**: Validated `data.cwd` in `action === 'start'` against trusted roots (`process.cwd()` and `DSH_WORKSPACE_ROOT`), returning HTTP 400 for unconfined directories. Removed self-referential allowlist propagation from `sessionGoal.cwd`.
+
+### Fixed & Improved
+- **Core Tools and Prompt Section Lifecycle Restoration (Fixes #94)**: Snapshotted displaced core DSH tools (`get_goal`, `create_goal`, `update_goal`) and system prompt section (`tool:goal`). Restores original definitions back to global registries upon plugin disposal or hot reloading.
+- **Active Issue Checklist Sync via Gitea/GitHub API (Fixes #87)**: Implemented active synchronization (`syncMilestoneWithIssue`) updating issue body task lists (`- [x]`) upon milestone completion via Gitea REST API using token credentials.
+- **Settings Scope Dynamic Merging on DSH 0.1.7 (Fixes #63)**: Added support for `writable` and `ready` settings snapshot states, dynamically merging live settings without dropping custom fields.
+- **Official Public GitHub Release Automation (Fixes #95)**: Published official GitHub releases matching npm distribution.
+
 ## 0.2.10
 
 ### Added
