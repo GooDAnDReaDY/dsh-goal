@@ -2,6 +2,18 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.12
+
+### Fixed & Hardened (Deep Audit Release)
+- **UI Render Crash Prevention (Fixes #97)**: Defined `formatElapsed` helper function in `lib/client.js` to format live elapsed execution seconds, preventing `ReferenceError: formatElapsed is not defined` during dock bar rendering.
+- **Default Storage Path & Persistence Isolation (Fixes #98)**: Corrected default storage path fallback logic in `lib/index.js` so default schema configurations preserve disk state persistence in `~/.dsh/dsh-goal-state.json`, while isolating automated test runs from production state files.
+- **Cordis Lifecycle Effect Cleanup for Auto-Updater (Fixes #99)**: Wrapped `registerPluginUpdater` route registration inside `ctx.effect` to ensure the update endpoint is cleanly unregistered on plugin reload or disposal.
+- **Goal Templates Drawer UI & API Integration (Fixes #100)**: Connected the backend `GOAL_TEMPLATES` catalogue (`GET /dsh-goal/templates`) and `POST /dsh-goal/action` (`instantiate_template`) to an expandable Engineering Templates drawer in `QuickLaunchModal`.
+- **Automatic Issue Checklist Parsing for Milestones (Fixes #101)**: Integrated `parseIssueChecklist` in `GoalEngine.startGoal` so starting goals referencing issue markdown automatically parses task lists (`- [ ]` / `- [x]`) into initial milestones.
+- **Canonical Cordis Logger Migration (Fixes #102)**: Replaced 13 raw `console.warn` / `console.error` calls across `lib/` modules with `ctx.logger('goal')`, complying with DSH logging standards and log rotation.
+- **HTTP 405 Method Not Allowed Conformance (Fixes #103)**: Added RFC 9110 compliant method validation with `Allow` header on `/dsh-goal/*` endpoints, returning HTTP 405 instead of masking as HTTP 404.
+- **Settings Card Dynamic Version Resolution (Fixes #104)**: Purged hardcoded legacy fallback version `'0.2.3'` from settings state in `lib/client.js`, dynamically resolving live package version.
+
 ## 0.2.11
 
 ### Security & Hardening
