@@ -24,10 +24,20 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
   // isTrustedCaller from non-loopback IP without headers
   assert.equal(isTrustedCaller({ socket: { remoteAddress: '192.168.1.50' }, headers: { host: '192.168.1.111:3080' } }), false);
 
-  // sec-fetch-site
+  // sec-fetch-site alone without matching Origin/Referer is rejected (Issue #78)
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: { host: '192.168.1.111:3080', 'sec-fetch-site': 'same-origin' }
+  }), false);
+
+  // sec-fetch-site with matching Origin is accepted
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.50' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    }
   }), true);
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
@@ -126,13 +136,25 @@ test('Issue #78: POST /dsh-goal/action rejects untrusted LAN callers without val
   });
   assert.equal(resLoopback.statusCode, 200);
 
-  // LAN caller with Sec-Fetch-Site: same-origin succeeds
+  // LAN caller with Sec-Fetch-Site alone without matching Origin is rejected (Issue #78)
   const resSameOriginSec = await sendReq({
     remoteAddress: '192.168.1.55',
     headers: { 'sec-fetch-site': 'same-origin' },
     body: { action: 'clear' }
   });
-  assert.equal(resSameOriginSec.statusCode, 200);
+  assert.equal(resSameOriginSec.statusCode, 403);
+  assert.equal(resSameOriginSec.body.error, 'Forbidden: untrusted caller origin');
+
+  // LAN caller with matching Origin succeeds
+  const resValidOrigin = await sendReq({
+    remoteAddress: '192.168.1.55',
+    headers: {
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+    body: { action: 'clear' }
+  });
+  assert.equal(resValidOrigin.statusCode, 200);
 
   // LAN caller with Sec-Fetch-Site: cross-site gets 403
   const resCrossSiteSec = await sendReq({
