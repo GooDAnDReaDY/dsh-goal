@@ -95,10 +95,8 @@ test('executeGoalSlashCommand handles show, start, pause, resume, clear lifecycl
   assert.equal(cancelledEvents.length, 2);
 });
 
-test('apply registers /goal command with commands service and injects systemPrompt', async () => {
+test('Issue #113: apply does NOT register conflicting /goal command, delegating to native core GoalService', async () => {
   let registeredCommand = null;
-  let registeredSection = null;
-  const followups = [];
 
   const mockCtx = {
     inject(services, callback) {
@@ -116,21 +114,6 @@ test('apply registers /goal command with commands service and injects systemProm
         };
         callback(cctx);
       }
-      if (services.includes('systemPrompt')) {
-        const pctx = {
-          systemPrompt: {
-            getSectionOrder: () => 650,
-            section(sec) {
-              registeredSection = sec;
-              return () => { registeredSection = null; };
-            },
-          },
-          effect(fn) {
-            fn();
-          },
-        };
-        callback(pctx);
-      }
     },
     effect() {},
     on() {},
@@ -139,35 +122,6 @@ test('apply registers /goal command with commands service and injects systemProm
 
   apply(mockCtx, { maxIterations: 30 });
 
-  assert.ok(registeredCommand, 'Command definition should be registered in commands service');
-  assert.equal(registeredCommand.name, 'goal');
-  assert.ok(registeredCommand.description.includes('Goal Mode'));
-  assert.equal(typeof registeredCommand.handler, 'function');
-
-  assert.ok(registeredSection, 'System prompt section should be registered');
-  assert.equal(registeredSection.name, 'tool:dsh-goal');
-  assert.equal(registeredSection.order, 650);
-
-  // Test handler invocation with agent
-  const result = await registeredCommand.handler({
-    rawInput: 'Тестовая цель через слэш',
-    agent: {
-      followup(m) { followups.push(m); },
-    },
-  });
-
-  assert.equal(result.kind, 'success');
-  assert.ok(result.text.includes('Тестовая цель через слэш'));
-  assert.ok(result.text.includes('30 iterations') || result.text.includes('30'));
-
-  // Ensure agent got the task with UUID and plan instructions
-  assert.equal(followups.length, 1);
-  assert.equal(typeof followups[0].id, 'string');
-  assert.ok(followups[0].content[0].text.includes('Тестовая цель через слэш'));
-  assert.ok(followups[0].content[0].text.includes('goal_set_milestones'));
-
-  // Ensure system prompt section reflects the active goal
-  const promptText = registeredSection.text();
-  assert.ok(promptText.includes('Тестовая цель через слэш'));
-  assert.ok(promptText.includes('[DSH GOAL MODE ACTIVE]'));
+  // Issue #113 contract: dsh-goal must not register /goal command
+  assert.equal(registeredCommand, null, 'Command definition /goal must not be registered by dsh-goal (native in core)');
 });

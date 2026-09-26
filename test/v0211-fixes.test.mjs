@@ -177,7 +177,7 @@ test('Issue #79: POST start rejects unconfined or attacker-controlled cwd', asyn
   assert.equal(resStartOk.body.ok, true);
 });
 
-test('Issue #94: Displaced core tools and system prompt sections are restored on disposal', () => {
+test('Issue #94 & #113: Core tools are never displaced by dsh-goal addon', () => {
   const existingGetGoal = { name: 'get_goal', original: true };
   const existingCreateGoal = { name: 'create_goal', original: true };
   const existingUpdateGoal = { name: 'update_goal', original: true };
@@ -188,6 +188,7 @@ test('Issue #94: Displaced core tools and system prompt sections are restored on
     ['update_goal', existingUpdateGoal],
   ]);
 
+  const registeredTools = new Map();
   const disposers = [];
   const mockToolsCtx = {
     inject: (deps, callback) => {
@@ -195,9 +196,9 @@ test('Issue #94: Displaced core tools and system prompt sections are restored on
         tools: {
           layers: { global: { tools: { data: globalToolsData } } },
           register: (def) => {
-            globalToolsData.set(def.name, def);
+            registeredTools.set(def.name, def);
             return () => {
-              globalToolsData.delete(def.name);
+              registeredTools.delete(def.name);
             };
           },
         },
@@ -212,17 +213,21 @@ test('Issue #94: Displaced core tools and system prompt sections are restored on
   const engine = new GoalEngine();
   registerTools(mockToolsCtx, { engine });
 
-  // Verify core tools were replaced by dsh-goal tools
-  assert.notEqual(globalToolsData.get('get_goal'), existingGetGoal);
-  assert.notEqual(globalToolsData.get('create_goal'), existingCreateGoal);
-  assert.notEqual(globalToolsData.get('update_goal'), existingUpdateGoal);
+  // Core tools are never displaced
+  assert.equal(globalToolsData.get('get_goal'), existingGetGoal);
+  assert.equal(globalToolsData.get('create_goal'), existingCreateGoal);
+  assert.equal(globalToolsData.get('update_goal'), existingUpdateGoal);
+
+  // Addon tools are registered
+  assert.equal(registeredTools.has('goal_milestones'), true);
+  assert.equal(registeredTools.has('goal_checklist'), true);
 
   // Trigger disposers (simulate plugin unmount / disable)
   for (const disp of disposers) {
     disp();
   }
 
-  // Verify original core tools are fully restored!
+  // Verify original core tools are still fully preserved
   assert.equal(globalToolsData.get('get_goal'), existingGetGoal);
   assert.equal(globalToolsData.get('create_goal'), existingCreateGoal);
   assert.equal(globalToolsData.get('update_goal'), existingUpdateGoal);
