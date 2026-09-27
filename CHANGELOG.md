@@ -2,6 +2,17 @@
 
 Notable changes to `@goodandready/dsh-goal`.
 
+## 0.2.13
+
+### Changed & Refactored (Core Goal Addon Transformation - #113)
+- **Native Core Goal Addon**: Transformed from standalone duplicate goal engine into an advanced companion addon over DeepSeek Harness native GoalService (`@deepseek-ai/dsh-goal`, `ctx.goals`).
+- **Conflict Resolution**: Purged conflicting tools (`create_goal`, `get_goal`, `update_goal`) and duplicate `/goal` command registration, delegating goal lifecycle to core `dsh-command-goal` and `GoalBar`.
+- **Addon Model Tools**: Registered specialized tools `goal_milestones` (`list`, `set`, `add`, `complete`) and `goal_checklist` (`toggle`).
+- **Token Budget Guard**: Real-time token monitoring via `ctx.tokenMeter` with 80% threshold warnings and automatic blocking via `ctx.goals.block(agent, ref, { code: 'budget', message })`.
+- **Milestones & Checklists**: Stored by `goalId` in dedicated `AddonStore` with milestone prompt injection via `agent/pre-step` waterfall listener.
+- **Git Snapshots & Rollback**: Automatic commit/tag checkpoints upon milestone completion with confined path rollback.
+- **Retrospective Reports**: Automatic export of structured markdown execution summaries to `.dsh/goals/<timestamp>-<slug>.md` on goal completion or clear.
+
 ## 0.2.12
 
 ### Fixed & Hardened (Deep Audit Release)
