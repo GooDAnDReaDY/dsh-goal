@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-import { Config, apply as applyHost } from '../lib/index.js';
+import { Config, plainConfig, apply as applyHost } from '../lib/index.js';
 
 test('package.json keeps dsh.client.inject empty: stale rc.0 module names are gone', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
@@ -12,50 +12,46 @@ test('package.json keeps dsh.client.inject empty: stale rc.0 module names are go
 
 test('settings schema is a schemastery schema function with plugin defaults', () => {
   assert.equal(typeof Config, 'function');
-  const resolved = Config({});
+  const resolved = plainConfig(Config({}));
   assert.equal(resolved.maxIterations, 25);
   assert.equal(resolved.autoDrive, true);
   assert.equal(resolved.enableSound, true);
 
-  const custom = Config({ maxIterations: 7, autoDrive: false, enableSound: false });
+  const custom = plainConfig(Config({ maxIterations: 7, autoDrive: false, enableSound: false }));
   assert.equal(custom.maxIterations, 7);
   assert.equal(custom.autoDrive, false);
   assert.equal(custom.enableSound, false);
 });
 
-test('host apply registers settings with a schema function, not null', () => {
-  const registered = [];
-  const fakeScope = { get: () => ({}) };
+test('host apply unwraps the volatile boxes the entry config hands it', () => {
+  let registerCalls = 0;
   const ctx = {
     inject: (services, cb) => {
       if (services[0] === 'settings') {
-        cb({
-          settings: {
-            register: (ns, schema, opts) => {
-              registered.push([ns, schema, opts]);
-              return fakeScope;
-            },
-          },
-        });
+        // settings.register is gone from both supported hosts; if it is ever called
+        // again, the plugin would mount a seat that no longer exists.
+        registerCalls++;
+        cb({ settings: { register: () => ({}) } });
       }
       if (services[0] === 'tools') cb({ tools: {} });
     },
-    effect: (cb) => {
-      cb();
-      return () => {};
-    },
+    effect: (cb) => { cb(); return () => {}; },
     on: () => {},
     off: () => {},
     webServer: { register: () => () => {} },
   };
 
-  applyHost(ctx, {});
+  // A real entry config: volatile fields come back as Volatile boxes.
+  const entryConfig = Config({ maxIterations: 7, autoDrive: false });
+  assert.equal(typeof entryConfig.maxIterations.get, 'function',
+    'the host must be handing us a Volatile box, otherwise this test proves nothing');
 
-  assert.equal(registered.length, 1);
-  const [ns, schema, opts] = registered[0];
-  assert.equal(ns, 'dsh-goal');
-  assert.equal(typeof schema, 'function', 'rc.1 settings.register expects a schemastery schema, not null');
-  assert.ok(opts && typeof opts.base === 'object');
+  applyHost(ctx, entryConfig);
+
+  assert.equal(registerCalls, 0, 'apply must not call the retired settings.register');
+  // Reading through the plugin yields plain values, not boxes.
+  assert.equal(plainConfig(entryConfig).maxIterations, 7);
+  assert.equal(plainConfig(entryConfig).autoDrive, false);
 });
 
 test('client bundle declares rc.1 service inject and registers the settings card', async () => {
@@ -105,9 +101,14 @@ test('client bundle declares rc.1 service inject and registers the settings card
   plugin.apply(ctx);
 
   assert.equal(bound.namespace, 'dsh-goal');
-  const cardEntry = registered.find(([opts]) => opts.name === 'settings.plugin.item');
-  assert.ok(cardEntry, 'settings.plugin.item slot must be registered');
-  assert.equal(cardEntry[0].key, 'dsh-goal', 'slot key must equal the settings namespace');
+  // settings.plugin.item was retired before 0.1.7-rc.2 and the client no longer
+  // registers it; the live seat is the Plugins page row.
+  assert.ok(!registered.some(([opts]) => opts.name === 'settings.plugin.item'),
+    'the retired settings.plugin.item seat must stay removed');
+  const cardEntry = registered.find(([opts]) => opts.name === 'plugins.row.config');
+  assert.ok(cardEntry, 'plugins.row.config seat must be registered');
+  assert.equal(cardEntry[0].key, '@goodandready/dsh-goal#dsh-goal',
+    "row seat key follows the '<package>#<row id>' convention");
   assert.equal(cardEntry[0].locale, 'dsh-goal');
   const injected = cardEntry[0].inject();
   assert.equal(injected.scope, scopeStub, 'card receives the bound settings scope');

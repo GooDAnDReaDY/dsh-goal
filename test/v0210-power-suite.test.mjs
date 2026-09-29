@@ -7,7 +7,7 @@ import { parseIssueRef, parseIssueChecklist, updateChecklistInMarkdown } from '.
 import { generateRetrospectiveData } from '../lib/engine-retrospective.js';
 import { getTemplatesCatalogue, instantiateTemplate, generatePreplanDraft } from '../lib/engine-templates.js';
 import { isMilestoneBlocked } from '../lib/engine-milestones.js';
-import { Config } from '../lib/index.js';
+import { Config, plainConfig } from '../lib/index.js';
 
 test('Issue #83: Pause & Intervene updates user directive and injects into prompt', () => {
   const engine = new GoalEngine({ storagePath: null });
@@ -196,7 +196,7 @@ test('Issue #91: Milestone Dependency Graph blocks execution until prerequisites
 });
 
 test('Issue #92: Sound scheme and voice announcements configuration defaults', () => {
-  const cfg = Config({});
+  const cfg = plainConfig(Config({}));
   assert.equal(cfg.soundScheme, 'default');
   assert.equal(cfg.enableVoiceAnnouncements, false);
   assert.equal(cfg.enableLiveActivityFeed, true);
@@ -207,11 +207,11 @@ test('Issue #92: Sound scheme and voice announcements configuration defaults', (
   assert.equal(cfg.enableTemplatesDrawer, true);
   assert.equal(cfg.enableMilestoneDependencies, true);
 
-  const customCfg = Config({
+  const customCfg = plainConfig(Config({
     soundScheme: 'retro',
     enableVoiceAnnouncements: true,
     autoScaleBudgetNearCompletion: true,
-  });
+  }));
   assert.equal(customCfg.soundScheme, 'retro');
   assert.equal(customCfg.enableVoiceAnnouncements, true);
   assert.equal(customCfg.autoScaleBudgetNearCompletion, true);

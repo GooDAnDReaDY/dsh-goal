@@ -1,42 +1,19 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { apply } from '../lib/index.js';
+import { apply, plainConfig } from '../lib/index.js';
 
 describe('Audit fixes verification (#20, #21, #22, #24)', () => {
-  it('Issue #21: getConfig ignores snapshot value when status is loading or error', () => {
-    let capturedScope = null;
-    const mockCtx = {
-      inject: (deps, cb) => {
-        if (deps.includes('settings')) {
-          cb({
-            settings: {
-              register: (ns, schema, opts) => {
-                const scope = {
-                  status: 'loading',
-                  getSnapshot: () => ({ status: scope.status, value: { maxIterations: 999 } }),
-                  get: () => ({ maxIterations: 999 }),
-                  subscribe: () => () => {},
-                };
-                capturedScope = scope;
-                return scope;
-              },
-            },
-            effect: () => {},
-          });
-        }
-      },
-      on: () => {},
-      off: () => {},
-      effect: () => {},
-    };
+  it('Issue #21: settings are read as plain values, never as Volatile boxes', () => {
+    const mockCtx = { inject: () => {}, on: () => {}, off: () => {}, effect: () => {} };
 
-    apply(mockCtx, { maxIterations: 25 });
+    // A volatile field holds a box. Reading one without unwrapping yields an object,
+    // which would silently break every numeric comparison downstream.
+    const boxed = { maxIterations: { get: () => 999 } };
+    assert.equal(plainConfig(boxed).maxIterations, 999);
+    assert.equal(typeof plainConfig(boxed).maxIterations, 'number');
 
-    // When status is loading, getConfig should fallback to plugin settings, ignoring snap.value (999)
-    assert.ok(capturedScope);
-    const snap = capturedScope.getSnapshot();
-    assert.equal(snap.status, 'loading');
-    assert.equal(snap.value.maxIterations, 999);
+    // The host passes the entry config straight in; apply must survive a boxed one.
+    assert.doesNotThrow(() => apply(mockCtx, boxed));
   });
 
   it('Issue #22: WebServer routes guard against CSRF and cross-site requests', () => {
