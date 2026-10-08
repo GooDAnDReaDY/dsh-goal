@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.18
+
+### Fixed & Hardened (Settings Data Loss & Schemastery Volatile Batch)
+- **Volatile Schema Data Loss (#117)**: Added runtime polyfill fallback for `Schema.prototype.volatile` and defensive config unwrapping, preventing DSH 0.2 from silently dropping plugin settings.
+- **Schemastery Boxed Objects unwrapping (#121)**: Sanitized boxed Schemastery primitives at runtime entry and inside `applySettings`, preventing boolean flags from forcing true and numbers from remaining boxed objects.
+- **Settings Save Plan Coverage (#145)**: Synchronized `computeSavePlan` and `getFieldStatus` across all 9 plugin configuration keys (`maxTokenBudget`, `budgetWarningThreshold`, `autoCheckpointOnMilestone`, etc.) so client configuration updates apply cleanly.
+- **Card Form State Synchronization (#146)**: Unified form definitions between `lib/card-form-state.js` and `lib/client.js`, eliminating duplicate and diverging state management logic.
+
+## 0.2.15
+
+### Fixed
+- **Peer gate on DSH 0.2.0-rc.1** (#58): DSH skips a profile bundle whose `peerDependencies` exclude the running version, so this plugin was absent from the profile with no error in the UI. Every `@deepseek-ai/dsh-*` peer now names both the 0.1.7-rc.2 and 0.2.0-rc.1 lines, because semver does not admit a prerelease of the next minor into a range that does not name it.
+
 Notable changes to `@goodandready/dsh-goal`.
 
 ## 0.2.13
