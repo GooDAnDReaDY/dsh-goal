@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNumberField, getFieldStatus, computeSavePlan, DEFAULT_SETTINGS } from '../lib/card-form-state.js';
+import { parseNumberField, getFieldStatus, computeSavePlan, DEFAULT_SETTINGS, NUMERIC_FIELDS } from '../lib/card-form-state.js';
 
-test('DEFAULT_SETTINGS contains all 7 canonical configuration fields', () => {
+test('DEFAULT_SETTINGS contains all canonical configuration fields', () => {
   assert.equal(DEFAULT_SETTINGS.maxIterations, 25);
   assert.equal(DEFAULT_SETTINGS.autoDrive, true);
   assert.equal(DEFAULT_SETTINGS.enableSound, true);
   assert.equal(DEFAULT_SETTINGS.showQuickLaunchButton, true);
   assert.equal(DEFAULT_SETTINGS.consecutiveToolFailureLimit, 3);
   assert.equal(DEFAULT_SETTINGS.enableBrowserNotifications, true);
+  assert.equal(DEFAULT_SETTINGS.maxTokenBudget, 0);
+  assert.equal(DEFAULT_SETTINGS.budgetWarningThreshold, 80);
+  assert.equal(DEFAULT_SETTINGS.autoCheckpointOnMilestone, false);
   assert.equal(DEFAULT_SETTINGS.storagePath, '');
 });
 
@@ -34,24 +37,8 @@ test('parseNumberField parses positive integers, clears on empty string, rejects
 
 test('getFieldStatus computes status, dirty, invalid and overridden flags accurately', () => {
   const baseSnap = {
-    value: {
-      maxIterations: 25,
-      autoDrive: true,
-      enableSound: true,
-      showQuickLaunchButton: true,
-      consecutiveToolFailureLimit: 3,
-      enableBrowserNotifications: true,
-      storagePath: '',
-    },
-    base: {
-      maxIterations: 25,
-      autoDrive: true,
-      enableSound: true,
-      showQuickLaunchButton: true,
-      consecutiveToolFailureLimit: 3,
-      enableBrowserNotifications: true,
-      storagePath: '',
-    },
+    value: { ...DEFAULT_SETTINGS },
+    base: { ...DEFAULT_SETTINGS },
     user: {},
   };
 
@@ -78,11 +65,16 @@ test('getFieldStatus computes status, dirty, invalid and overridden flags accura
   assert.equal(statusZero.invalid, false);
   assert.equal(statusZero.isDirty, true);
 
-  // 5. Overridden field in user settings
+  // 5. maxTokenBudget allows 0 and non-zero
+  const statusBudget = getFieldStatus('maxTokenBudget', '50000', baseSnap);
+  assert.equal(statusBudget.invalid, false);
+  assert.equal(statusBudget.isDirty, true);
+
+  // 6. Overridden field in user settings
   const overriddenSnap = {
-    value: { maxIterations: 50, autoDrive: false, enableSound: true },
-    base: { maxIterations: 25, autoDrive: true, enableSound: true },
-    user: { maxIterations: 50, autoDrive: false },
+    value: { maxIterations: 50, autoDrive: false, maxTokenBudget: 100000 },
+    base: { maxIterations: 25, autoDrive: true, maxTokenBudget: 0 },
+    user: { maxIterations: 50, autoDrive: false, maxTokenBudget: 100000 },
   };
 
   const statusOverridden = getFieldStatus('maxIterations', undefined, overriddenSnap);
@@ -90,43 +82,47 @@ test('getFieldStatus computes status, dirty, invalid and overridden flags accura
   assert.equal(statusOverridden.isOverridden, true);
   assert.equal(statusOverridden.isDirty, false);
 
-  // 6. Clearing an overridden field via empty string resets override
-  const statusCleared = getFieldStatus('maxIterations', '', overriddenSnap);
+  // 7. Clearing an overridden field via empty string resets override
+  const statusCleared = getFieldStatus('maxTokenBudget', '', overriddenSnap);
   assert.equal(statusCleared.invalid, false);
   assert.equal(statusCleared.isDirty, true);
 });
 
-test('computeSavePlan generates correct writes for changes and unsets across all fields', () => {
+test('computeSavePlan covers all 9 settings and generates correct writes for changes and unsets', () => {
   const snap = {
     value: {
       maxIterations: 50,
       autoDrive: false,
       enableSound: true,
+      showQuickLaunchButton: true,
       consecutiveToolFailureLimit: 5,
       enableBrowserNotifications: true,
+      maxTokenBudget: 100000,
+      budgetWarningThreshold: 85,
+      autoCheckpointOnMilestone: true,
       storagePath: '/custom/path',
     },
-    base: {
-      maxIterations: 25,
-      autoDrive: true,
-      enableSound: true,
-      consecutiveToolFailureLimit: 3,
-      enableBrowserNotifications: true,
-      storagePath: '',
-    },
+    base: { ...DEFAULT_SETTINGS },
     user: {
       maxIterations: 50,
       autoDrive: false,
       consecutiveToolFailureLimit: 5,
+      maxTokenBudget: 100000,
+      budgetWarningThreshold: 85,
+      autoCheckpointOnMilestone: true,
       storagePath: '/custom/path',
     },
   };
 
+  // Modify maxTokenBudget, reset autoCheckpointOnMilestone, clear maxIterations
   const draft = {
     maxIterations: '',
     autoDrive: true,
     consecutiveToolFailureLimit: '0',
     enableBrowserNotifications: false,
+    maxTokenBudget: '200000',
+    budgetWarningThreshold: '75',
+    autoCheckpointOnMilestone: false,
     storagePath: '',
   };
 
@@ -136,6 +132,9 @@ test('computeSavePlan generates correct writes for changes and unsets across all
     ['autoDrive', true],
     ['consecutiveToolFailureLimit', 0],
     ['enableBrowserNotifications', false],
+    ['maxTokenBudget', 200000],
+    ['budgetWarningThreshold', 75],
+    ['autoCheckpointOnMilestone', false],
     ['storagePath', undefined],
   ]);
 });
