@@ -98,12 +98,26 @@ test('Issue #78: GET endpoints and SSE reject untrusted callers', async () => {
   });
   assert.equal(resStateLoopback.statusCode, 200);
 
-  // 6. GET /dsh-goal/state with matching origin succeeds with 200
+  // 6. GET /dsh-goal/state from LAN browser with same-origin header and matching origin succeeds with 200
   const resStateOrigin = await sendReq('/dsh-goal/state', {
     remoteAddress: '192.168.1.55',
-    headers: { origin: 'http://192.168.1.111:3000' },
+    headers: {
+      host: '192.168.1.111:3000',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3000',
+    },
   });
   assert.equal(resStateOrigin.statusCode, 200);
+
+  // 7. GET /dsh-goal/state from LAN without sec-fetch-site: same-origin is rejected (#148)
+  const resStateLanCurl = await sendReq('/dsh-goal/state', {
+    remoteAddress: '192.168.1.55',
+    headers: {
+      host: '192.168.1.111:3000',
+      origin: 'http://192.168.1.111:3000',
+    },
+  });
+  assert.equal(resStateLanCurl.statusCode, 403);
 });
 
 test('Issue #79: POST start rejects unconfined or attacker-controlled cwd', async () => {
