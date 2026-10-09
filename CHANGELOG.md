@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.21
+
+### Fixed & Hardened (Core Runtime Logic & Engine Integrity Batch)
+- **Autonomous Prompt-Contract Tools (#127)**: Registered prompt-contract aliases goal_set_milestones, goal_update_progress, and goal_finish alongside goal_milestones and goal_checklist, aligning tool definitions with model steering prompts.
+- **Milestone Issue Sync Target (#129, #139)**: Corrected syncMilestoneWithIssue invocation in lib/milestone-manager.js to pass { issueRef, cwd } and milestone object m; added warning logger instead of empty catch in lib/goal-engine.js.
+- **Agent Control Wiring (#130)**: Implemented stopRunningAgents and resumeActiveAgent callbacks and sessionAgents tracking in lib/index.js, wiring them into registerRoutes for proper /action pause/clear handling.
+- **Dynamic Config Updating (#132)**: Updated GoalEngine.updateConfig to support defaultMaxIterations and maxIterations from boxed/unboxed values; unwrapped volatile boxes in constructor and startGoal.
+- **Retrospective Start Commit & Ref Validation (#133)**: Corrected property access to goal.gitStartCommit in lib/engine-retrospective.js, validated ref with isValidGitRef, and added -- before git diff refs.
+- **Event Loop Debounce Timers (#134)**: Fixed saveTimer unref pattern in lib/engine-store.js and lib/addon-store.js to ensure unreferenced timers do not hold the event loop while properly resetting state.
+- **State Growth Boundaries (#135)**: Added removeGoalData(goalId) and auto-pruning to lib/addon-store.js; capped goal.nudges to max 50 items in lib/engine-sessions.js.
+- **Report Addon Data & Attribution (#136, #143)**: Forwarded addonData in saveGoalArtifact and saveGoalReportFile in lib/engine-reports.js so milestones/snapshots are included in reports; updated report GitHub URL to https://github.com/goodandready/dsh-goal.
+- **Milestone Status Validation (#137)**: Added validation in lib/engine-milestones.js and lib/goal-engine.js so invalid milestone statuses are rejected and return false.
+- **Engine Logger Initialization (#138)**: Assigned this.logger = options.logger || console in GoalEngine constructor and passed logger from lib/index.js.
+- **Safe Legacy State Migration (#140)**: Fixed migrateLegacyState in lib/addon-store.js to only stamp _migratedToAddon and write when migratedAny === true; corrected legacyStatePath in lib/index.js.
+- **Active Milestone Prompt Next List (#141)**: Updated lib/milestone-manager.js to render only uncompletedChecklist under Next items.
+- **Tool Definition Cleanup (#142)**: Removed redundant handler: property from lib/tools.js. Kept turn/end lifecycle hook in lib/index.js.
+
 ## 0.2.19
 
 ### Fixed & Hardened (Security & Sanitization Batch)
