@@ -23,6 +23,9 @@ export DSH_HOME="${DSH_HOME:-/home/vadim/.dsh}"
 
 case "$MODE" in
   check)
+    echo "==> Verifying client build drift..."
+    node scripts/build-client.mjs --check
+
     echo "==> Running test suite..."
     NODE_ENV=test node --test test/*.test.mjs
 
