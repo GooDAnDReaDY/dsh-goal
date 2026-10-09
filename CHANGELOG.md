@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.23
+
+### Changed & Decomposed (Client Architecture & Modularity Batch)
+- **Monolithic client.js Decomposition (#150)**: Decomposed 5,311-line monolithic `lib/client.js` into 12 single-responsibility modules in `src/client/` (`00-header.js`, `10-icons.js`, `20-styles.js`, `30-audio.js`, `40-reports.js`, `50-modal-details.js`, `60-modal-quicklaunch.js`, `70-dock-banner.js`, `80-settings-logic.js`, `90-settings-card.js`, `100-locales.js`, `110-slots-registration.js`).
+- **Client Build & Drift Verification (#150)**: Added `scripts/build-client.mjs` supporting `--check` mode to enforce zero drift between fragments and bundle; added `npm run build:client` and wired drift check into `npm test` and `deploy.sh check`.
+- **Client Build Regression Suite**: Added `test/client-build.test.mjs` asserting 100% byte-for-byte fidelity and build script functionality.
+
 ## 0.2.22
 
 ### Fixed & Cleaned (Repository Hygiene & Dead Code Removal Batch)
