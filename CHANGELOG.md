@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.19
+
+### Fixed & Hardened (Security & Sanitization Batch)
+- **Credential Path & Host Sanitation (#120, #126)**: Purged hardcoded developer credentials path (`/mnt/external/...`) and default internal port `3005` from `lib/engine-issue-sync.js`; credentials and baseUrl are now resolved strictly via environment variables or explicit options; removed fallback default repository name.
+- **Fail-Closed Caller Trust & Anti-Spoofing (#122, #144, #148)**: Hardened `isTrustedCaller` in `lib/routes.js` to reject non-browser LAN clients spoofing Origin/Host headers without browser `Sec-Fetch-Site: same-origin`; requests permitted strictly for loopback clients or verified same-origin browser operator UI.
+- **Git Ref & Branch Sanitization (#123)**: Added `isValidGitRef` to reject flag injection (`-f`, `--upload-pack`), path traversal (`..`), and invalid characters in git operations; added `isValidGitRef` check to `branch_action` HTTP route (`400 Bad Request`); added `--` separator before refs in git commands.
+- **Working Directory Confinement & Tool Milestone Signature (#124, #128)**: Enforced safe cwd resolution via `getSafeCwd` across goal-start, tools, and git branch helpers; corrected `completeMilestone` invocation in `lib/tools.js` to pass `notes` and `workspaceRoot` as distinct arguments.
+- **Safe Milestone Checkpoints (#125)**: Replaced `git add -A` with `git add -u` in `lib/engine-reports.js` to prevent staging untracked files or secrets; purged banned `--no-verify` flag from milestone checkpoint commits.
+
 ## 0.2.18
 
 ### Fixed & Hardened (Settings Data Loss & Schemastery Volatile Batch)

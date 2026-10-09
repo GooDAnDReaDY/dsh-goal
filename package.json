@@ -1,6 +1,6 @@
 {
   "name": "@goodandready/dsh-goal",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "Core Goal Addon (Token Budget, Milestones, Git Snapshots & Retrospective Reports) for DeepSeek Harness",
   "type": "module",
   "main": "./lib/index.js",
@@ -19,7 +19,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "NODE_ENV=test node --test test/*.test.mjs"
   },
   "keywords": [
     "dsh",
