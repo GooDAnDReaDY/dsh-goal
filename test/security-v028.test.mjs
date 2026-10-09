@@ -44,25 +44,43 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
     headers: { host: '192.168.1.111:3080', 'sec-fetch-site': 'cross-site' }
   }), false);
 
-  // Origin matching
+  // Origin matching from LAN without sec-fetch-site: same-origin is rejected (#122, #144, #148)
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: { host: '192.168.1.111:3080', origin: 'http://192.168.1.111:3080' }
-  }), true);
+  }), false);
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: { host: '192.168.1.111:3080', origin: 'http://attacker.com' }
   }), false);
 
-  // Referer matching
+  // Referer matching from LAN without sec-fetch-site is rejected (#122, #148)
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: { host: '192.168.1.111:3080', referer: 'http://192.168.1.111:3080/app' }
-  }), true);
+  }), false);
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: { host: '192.168.1.111:3080', referer: 'http://evil.com/leak' }
   }), false);
+
+  // Origin matching with sec-fetch-site: same-origin (browser operator UI) is accepted
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.50' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080'
+    }
+  }), true);
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.50' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      referer: 'http://192.168.1.111:3080/app'
+    }
+  }), true);
 });
 
 test('Issue #78: POST /dsh-goal/action rejects untrusted LAN callers without valid origin or sec-fetch-site', async () => {
