@@ -19,7 +19,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "NODE_ENV=test node --test test/*.test.mjs"
+    "build:client": "node scripts/build-client.mjs",
+    "test": "node scripts/build-client.mjs --check && NODE_ENV=test node --test test/*.test.mjs"
   },
   "keywords": [
     "dsh",
