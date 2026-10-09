@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GoalEngine, GoalState, detectLanguage } from '../lib/goal-engine.js';
-import { formatGoalStartPrompt, executeGoalSlashCommand, parseGoalInput } from '../lib/command-handler.js';
+import { formatGoalStartPrompt } from '../lib/engine-prompt.js';
 
 describe('i18n Language Detection and Multilingual Prompts (en & zh only)', () => {
   test('detectLanguage detects zh and en correctly', () => {
@@ -51,63 +51,6 @@ describe('i18n Language Detection and Multilingual Prompts (en & zh only)', () =
     assert.match(promptZh, /🎯 目标模式已激活 \(Goal Mode\): "添加余额组件"/);
     assert.match(promptZh, /自主执行契约：/);
     assert.match(promptZh, /第一步必选动作：/);
-  });
-
-  test('executeGoalSlashCommand outputs English messages for English goals and commands', () => {
-    const engine = new GoalEngine();
-
-    // Empty show in default language
-    const emptyRes = executeGoalSlashCommand(engine, { action: 'show' });
-    assert.match(emptyRes.text, /Goal Mode: no active goal set/);
-    assert.match(emptyRes.text, /Usage: \/goal/);
-
-    // Start English goal
-    const startRes = executeGoalSlashCommand(engine, { action: 'start', text: 'Deploy new service' });
-    assert.match(startRes.text, /🎯 Goal activated: "Deploy new service"/);
-    assert.match(startRes.text, /To pause: \/goal pause/);
-
-    // Show English goal
-    const showRes = executeGoalSlashCommand(engine, { action: 'show' });
-    assert.match(showRes.text, /🎯 Goal: "Deploy new service"/);
-    assert.match(showRes.text, /Status: RUNNING/);
-    assert.match(showRes.text, /Duration:/);
-
-    // Pause English goal
-    const pauseRes = executeGoalSlashCommand(engine, { action: 'pause' });
-    assert.match(pauseRes.text, /⏸ Goal paused: "Deploy new service"/);
-
-    // Resume English goal
-    const resumeRes = executeGoalSlashCommand(engine, { action: 'resume' });
-    assert.match(resumeRes.text, /▶️ Goal resumed: "Deploy new service"/);
-
-    // Clear English goal
-    const clearRes = executeGoalSlashCommand(engine, { action: 'clear' });
-    assert.match(clearRes.text, /🎯 Goal cleared/);
-  });
-
-  test('executeGoalSlashCommand outputs Chinese messages for Chinese goals and commands', () => {
-    const engine = new GoalEngine();
-
-    // Start Chinese goal
-    const startRes = executeGoalSlashCommand(engine, { action: 'start', text: '实现报表导出功能' });
-    assert.match(startRes.text, /🎯 目标已激活: "实现报表导出功能"/);
-
-    // Show Chinese goal
-    const showRes = executeGoalSlashCommand(engine, { action: 'show' });
-    assert.match(showRes.text, /🎯 目标: "实现报表导出功能"/);
-    assert.match(showRes.text, /状态: RUNNING/);
-
-    // Pause Chinese goal
-    const pauseRes = executeGoalSlashCommand(engine, { action: 'pause' });
-    assert.match(pauseRes.text, /⏸ 目标已暂停: "实现报表导出功能"/);
-
-    // Resume Chinese goal
-    const resumeRes = executeGoalSlashCommand(engine, { action: 'resume' });
-    assert.match(resumeRes.text, /▶️ 目标已恢复: "实现报表导出功能"/);
-
-    // Clear Chinese goal
-    const clearRes = executeGoalSlashCommand(engine, { action: 'clear' });
-    assert.match(clearRes.text, /🎯 目标已清除/);
   });
 
   test('Regression Gate: lib/*.js contains zero hardcoded Cyrillic characters', () => {

@@ -4,21 +4,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { GoalEngine, GoalState, MilestoneStatus } from '../lib/goal-engine.js';
-import { executeGoalSlashCommand, parseGoalInput } from '../lib/command-handler.js';
 import { apply } from '../lib/index.js';
 
-test('Session Isolation: executeGoalSlashCommand isolates state across distinct sessionIds', () => {
+test('Session Isolation: GoalEngine isolates state across distinct sessionIds', () => {
   const engine = new GoalEngine();
 
   // Start goal in session A
-  const resA = executeGoalSlashCommand(engine, { action: 'start', text: 'Task Alpha' }, { maxIterations: 10 }, null, 'session-A');
-  assert.equal(resA.kind, 'success');
-  assert.ok(resA.text.includes('Task Alpha'));
+  const snapAInit = engine.startGoal('Task Alpha', { maxIterations: 10 }, 'session-A');
+  assert.equal(snapAInit.state, GoalState.RUNNING);
+  assert.equal(snapAInit.title, 'Task Alpha');
 
   // Start goal in session B
-  const resB = executeGoalSlashCommand(engine, { action: 'start', text: 'Task Beta' }, { maxIterations: 15 }, null, 'session-B');
-  assert.equal(resB.kind, 'success');
-  assert.ok(resB.text.includes('Task Beta'));
+  const snapBInit = engine.startGoal('Task Beta', { maxIterations: 15 }, 'session-B');
+  assert.equal(snapBInit.state, GoalState.RUNNING);
+  assert.equal(snapBInit.title, 'Task Beta');
 
   // Verify snapshots are completely independent
   const snapA = engine.getSnapshot('session-A');
@@ -30,12 +29,12 @@ test('Session Isolation: executeGoalSlashCommand isolates state across distinct 
   assert.equal(snapDef.hasActiveGoal, false);
 
   // Pause session A only
-  executeGoalSlashCommand(engine, { action: 'pause' }, {}, null, 'session-A');
+  engine.pause('Pausing A', 'session-A');
   assert.equal(engine.getSnapshot('session-A').state, GoalState.PAUSED);
   assert.equal(engine.getSnapshot('session-B').state, GoalState.RUNNING);
 
   // Clear session A
-  executeGoalSlashCommand(engine, { action: 'clear' }, {}, null, 'session-A');
+  engine.clear('session-A');
   assert.equal(engine.getSnapshot('session-A').hasActiveGoal, false);
   assert.equal(engine.getSnapshot('session-B').hasActiveGoal, true);
   assert.equal(engine.getSnapshot('session-B').title, 'Task Beta');

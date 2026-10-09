@@ -83,3 +83,34 @@ test('Issue #113: Core tools are preserved; addon registers goal_milestones and 
   assert.equal(toggleResult.ok, true);
   assert.equal(toggleResult.item.done, true);
 });
+
+test('Issue #113 & #147: apply does NOT register conflicting /goal command, delegating to native core GoalService', async () => {
+  let registeredCommand = null;
+
+  const mockCtx = {
+    inject(services, callback) {
+      if (services.includes('commands')) {
+        const cctx = {
+          commands: {
+            register(def) {
+              registeredCommand = def;
+              return () => { registeredCommand = null; };
+            },
+          },
+          effect(fn) {
+            fn();
+          },
+        };
+        callback(cctx);
+      }
+    },
+    effect() {},
+    on() {},
+    off() {},
+  };
+
+  apply(mockCtx, { maxIterations: 30 });
+
+  // Issue #113 contract: dsh-goal must not register /goal command
+  assert.equal(registeredCommand, null, 'Command definition /goal must not be registered by dsh-goal (native in core)');
+});

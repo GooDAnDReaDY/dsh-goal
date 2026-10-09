@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { GoalEngine, GoalState, MilestoneStatus } from '../lib/goal-engine.js';
-import { formatGoalStartPrompt, executeGoalSlashCommand } from '../lib/command-handler.js';
+import { formatGoalStartPrompt } from '../lib/engine-prompt.js';
 import { apply } from '../lib/index.js';
 
 test('GoalEngine supports multiple isolated sessions concurrently', () => {
