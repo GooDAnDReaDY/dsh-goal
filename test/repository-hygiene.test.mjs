@@ -40,3 +40,26 @@ test('Repository Hygiene: all files in lib/*.js contain zero Cyrillic characters
     });
   }
 });
+
+test('Repository Hygiene (Issue #151): index.md, deploy.sh, and AGENTS.md exist; planning files not in root', () => {
+  assert.ok(fs.existsSync(path.join(rootDir, 'index.md')), 'index.md must exist in root');
+  assert.ok(fs.existsSync(path.join(rootDir, 'deploy.sh')), 'deploy.sh must exist in root');
+  assert.ok(fs.existsSync(path.join(rootDir, 'AGENTS.md')), 'AGENTS.md must exist in root');
+
+  assert.equal(fs.existsSync(path.join(rootDir, 'findings.md')), false, 'findings.md must not be in root');
+  assert.equal(fs.existsSync(path.join(rootDir, 'progress.md')), false, 'progress.md must not be in root');
+  assert.equal(fs.existsSync(path.join(rootDir, 'task_plan.md')), false, 'task_plan.md must not be in root');
+  assert.ok(fs.existsSync(path.join(rootDir, '.planning', '151-repo-hygiene', 'findings.md')), 'findings.md in .planning');
+});
+
+test('Package Manifest Hygiene (Issue #149): peerDependencies does not self-reference @deepseek-ai/dsh-goal', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+  assert.equal(pkg.peerDependencies?.['@deepseek-ai/dsh-goal'], undefined, 'Must not declare @deepseek-ai/dsh-goal as peer');
+  assert.equal(pkg.peerDependenciesMeta?.['@deepseek-ai/dsh-goal'], undefined, 'Must not declare peerDependenciesMeta for dsh-goal');
+  assert.equal(pkg.dependencies?.['@deepseek-ai/schemastery'], undefined, 'Must not duplicate schemastery in dependencies');
+});
+
+test('Dead Code Hygiene (Issue #131 & #147): dead modules are removed from lib', () => {
+  assert.equal(fs.existsSync(path.join(rootDir, 'lib', 'command-handler.js')), false, 'lib/command-handler.js must be deleted');
+  assert.equal(fs.existsSync(path.join(rootDir, 'lib', 'card-form-state.js')), false, 'lib/card-form-state.js must be deleted');
+});
