@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.22
+
+### Fixed & Cleaned (Repository Hygiene & Dead Code Removal Batch)
+- **Peer Dependencies Clean-up (#149)**: Purged self-referencing @deepseek-ai/dsh-goal from peerDependencies and removed its peerDependenciesMeta entry; eliminated redundant schemastery entry from dependencies.
+- **Dead Code Elimination (#131, #147)**: Deleted unused legacy modules lib/command-handler.js and lib/card-form-state.js, along with obsolete tests; relocated formatGoalStartPrompt helper into lib/engine-prompt.js.
+- **DEV Navigation & Tooling Standards (#151)**: Added AGENTS.md, deploy.sh, and index.md complying with DEV workspace standards; moved root planning files (findings.md, progress.md, task_plan.md) into .planning/151-repo-hygiene/.
+- **Hygiene Regression Suite**: Added automated tests asserting manifest structure, absence of dead files, and root file compliance.
+
 ## 0.2.21
 
 ### Fixed & Hardened (Core Runtime Logic & Engine Integrity Batch)
