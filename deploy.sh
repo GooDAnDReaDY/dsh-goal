@@ -53,7 +53,7 @@ case "$MODE" in
     fi
 
     sleep 3
-    "$0" verify "$PROFILE"
+    bash "$SCRIPT_DIR/deploy.sh" verify "$PROFILE"
     ;;
 
   verify)
