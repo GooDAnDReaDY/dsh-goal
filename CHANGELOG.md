@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.24
+
+### Fixed & Hardened (Git Branch Checkout Regression & Settings Coverage)
+- **Git Branch Merge & Discard Checkout Fix (#157)**: Removed erroneous `--` before `targetBranch` in `git checkout <targetBranch>` inside `mergeGoalBranch` and `discardGoalBranch` (`lib/engine-git-branch.js`), resolving pathspec exit code 1 failure; forwarded `allowedRoots` to `isGitRepository` and `getSafeCwd` and eliminated `DEP0187` deprecation warnings.
+- **Git Branch Positive Lifecycle Suite (#157)**: Added `test/git-branch-lifecycle.test.mjs` verifying branch creation, commit, merge into `main`, and branch discard on a real temporary Git repository.
+- **Settings Form Logic Test Suite (#158, #145)**: Restored `test/card-form.test.mjs` testing `src/client/80-settings-logic.js` across all 10 canonical settings fields (`DEFAULT_SETTINGS`, `parseNumberField`, `getFieldStatus`, `computeSavePlan`).
+- **LAN Caller Trust & Auth Token Support (#158, #148)**: Added optional `authToken` (`DSH_GOAL_AUTH_TOKEN` / `x-dsh-auth-token` / `Authorization: Bearer`) support to `isTrustedCaller` in `lib/routes.js`, documented the LAN same-origin operator UI security trade-off in `docs/design/DESIGN.md`, and expanded `test/security-sanitization-batch.test.mjs`.
+
 ## 0.2.23
 
 ### Changed & Decomposed (Client Architecture & Modularity Batch)
