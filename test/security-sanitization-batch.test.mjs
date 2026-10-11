@@ -102,6 +102,32 @@ test('Issues #122, #144, #148: isTrustedCaller fail-closed LAN caller protection
     socket: { remoteAddress: '::1' },
     headers: { host: 'localhost:3080' },
   }), true);
+
+  // Strict authToken mode (#148, #158): non-loopback rejected without valid token, accepted with token
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+  }, 'secret-token-123'), false);
+
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'x-dsh-auth-token': 'secret-token-123',
+    },
+  }, 'secret-token-123'), true);
+
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      authorization: 'Bearer secret-token-123',
+    },
+  }, 'secret-token-123'), true);
 });
 
 test('Issue #123: Git ref validation and branch action rejection', async () => {
