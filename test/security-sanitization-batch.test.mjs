@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 import { resolveGiteaAuth, resolveRepoInfo, syncMilestoneWithIssue } from '../lib/engine-issue-sync.js';
-import { isTrustedCaller, registerRoutes } from '../lib/routes.js';
+import { isTrustedCaller, isTrustedHost, registerRoutes } from '../lib/routes.js';
 import { isValidGitRef, isGitRepository, createGoalBranch, mergeGoalBranch, discardGoalBranch } from '../lib/engine-git-branch.js';
 import { getSafeCwd, MilestoneStatus } from '../lib/goal-engine-constants.js';
 import { GoalEngine } from '../lib/goal-engine.js';
@@ -128,6 +128,65 @@ test('Issues #122, #144, #148: isTrustedCaller fail-closed LAN caller protection
       authorization: 'Bearer secret-token-123',
     },
   }, 'secret-token-123'), true);
+});
+
+
+test('Issue #160: isTrustedHost and DNS rebinding protection in isTrustedCaller', () => {
+  // isTrustedHost unit validation
+  assert.equal(isTrustedHost('localhost'), true);
+  assert.equal(isTrustedHost('localhost.'), true);
+  assert.equal(isTrustedHost('server.local'), true);
+  assert.equal(isTrustedHost('router.lan'), true);
+  assert.equal(isTrustedHost('127.0.0.1'), true);
+  assert.equal(isTrustedHost('127.0.1.1'), true);
+  assert.equal(isTrustedHost('::1'), true);
+  assert.equal(isTrustedHost('::ffff:127.0.0.1'), true);
+  assert.equal(isTrustedHost('10.0.0.1'), true);
+  assert.equal(isTrustedHost('192.168.1.111'), true);
+  assert.equal(isTrustedHost('172.16.0.1'), true);
+  assert.equal(isTrustedHost('172.31.255.255'), true);
+  assert.equal(isTrustedHost('192.168.1.111:3080'), true);
+  assert.equal(isTrustedHost('[::1]:3080'), true);
+
+  // Untrusted public / external hosts rejected
+  assert.equal(isTrustedHost('evil.com'), false);
+  assert.equal(isTrustedHost('attacker.org'), false);
+  assert.equal(isTrustedHost('8.8.8.8'), false);
+  assert.equal(isTrustedHost('203.0.113.195'), false);
+  assert.equal(isTrustedHost('172.15.0.1'), false);
+  assert.equal(isTrustedHost('172.32.0.1'), false);
+  assert.equal(isTrustedHost(''), false);
+  assert.equal(isTrustedHost(null), false);
+
+  // DNS Rebinding Attack: attacker sets matching Host & Origin to public domain evil.com
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: 'evil.com',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://evil.com',
+    },
+  }), false);
+
+  // DNS Rebinding with referer
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: 'evil.com',
+      'sec-fetch-site': 'same-origin',
+      referer: 'http://evil.com/app',
+    },
+  }), false);
+
+  // External WAN remoteAddress rejected even if Host header is forged to LAN IP
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '203.0.113.50' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+  }), false);
 });
 
 test('Issue #123: Git ref validation and branch action rejection', async () => {
