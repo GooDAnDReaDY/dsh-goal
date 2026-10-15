@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.25
+
+### Fixed & Hardened (Security & DNS Rebinding Guard)
+- **DNS Rebinding & WAN Client Protection (#160)**: Added `isTrustedHost` helper verifying hostnames and IP addresses against local loopback, RFC1918 private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), and local domains (`.local`, `.lan`, `localhost`).
+- **Caller Trust Verification Hardening (#160)**: Enforced `isTrustedHost` across `remoteAddress`, `Host`, and parsed `Origin`/`Referer` in `lib/routes.js`. External WAN IPs and public domain names (such as `evil.com` resolving to internal IP) are rejected fail-closed (`403 Forbidden`).
+- **Security Architecture Contract (#160)**: Updated `docs/design/DESIGN.md` section 5.1 detailing DNS rebinding protection and WAN IP filtering.
+- **Security Regression Suite (#160)**: Added test cases in `test/security-sanitization-batch.test.mjs` verifying `isTrustedHost` across IP subnets, loopback formats, and blocking simulated DNS rebinding attacks.
+
 ## 0.2.24
 
 ### Fixed & Hardened (Git Branch Checkout Regression & Settings Coverage)
