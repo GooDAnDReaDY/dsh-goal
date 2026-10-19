@@ -96,3 +96,108 @@ test('Task 2: createPlanModeGuard blocks file writes when in plan mode', () => {
   assert.ok(blocked.includes('[Plan Mode Active]'));
   assert.ok(blocked.includes('write_to_file'));
 });
+// Task 3 Tests
+import { registerRoutes } from '../lib/routes.js';
+
+test('Task 3: POST /dsh-goal/action start with mode plan sets plan mode', async () => {
+  const engine = new GoalEngine({ storagePath: null });
+  let routeHandler = null;
+  registerRoutes({
+    webServer: { register: ({ handler }) => { routeHandler = handler; return () => {}; } },
+    effect: (fn) => fn(),
+  }, { engine });
+
+  const sendReq = (body) => new Promise((resolve) => {
+    let output = '';
+    const req = {
+      method: 'POST',
+      url: '/dsh-goal/action',
+      headers: { host: '127.0.0.1:3080' },
+      socket: { remoteAddress: '127.0.0.1' },
+      on: (ev, fn) => {
+        if (ev === 'data') fn(Buffer.from(JSON.stringify(body)));
+        if (ev === 'end') fn();
+      },
+    };
+    const res = {
+      statusCode: 200,
+      setHeader: () => {},
+      end: (data) => {
+        output = data;
+        resolve({ statusCode: res.statusCode, body: JSON.parse(output || '{}') });
+      },
+    };
+    routeHandler(req, res);
+  });
+
+  const startRes = await sendReq({
+    action: 'start',
+    title: 'Audit project security',
+    mode: 'plan',
+  });
+
+  assert.equal(startRes.statusCode, 200);
+  assert.equal(startRes.body.ok, true);
+  assert.equal(startRes.body.state.mode, 'plan');
+  assert.equal(startRes.body.state.state, 'PLANNING');
+  assert.equal(engine.isPlanMode(), true);
+});
+
+test('Task 3: POST /dsh-goal/action set_mode and approve_plan', async () => {
+  const engine = new GoalEngine({ storagePath: null });
+  let resumedPrompt = null;
+  const resumeActiveAgent = (prompt) => { resumedPrompt = prompt; };
+
+  let routeHandler = null;
+  registerRoutes({
+    webServer: { register: ({ handler }) => { routeHandler = handler; return () => {}; } },
+    effect: (fn) => fn(),
+  }, { engine, resumeActiveAgent });
+
+  const sendReq = (body) => new Promise((resolve) => {
+    let output = '';
+    const req = {
+      method: 'POST',
+      url: '/dsh-goal/action',
+      headers: { host: '127.0.0.1:3080' },
+      socket: { remoteAddress: '127.0.0.1' },
+      on: (ev, fn) => {
+        if (ev === 'data') fn(Buffer.from(JSON.stringify(body)));
+        if (ev === 'end') fn();
+      },
+    };
+    const res = {
+      statusCode: 200,
+      setHeader: () => {},
+      end: (data) => {
+        output = data;
+        resolve({ statusCode: res.statusCode, body: JSON.parse(output || '{}') });
+      },
+    };
+    routeHandler(req, res);
+  });
+
+  // Start in plan mode
+  await sendReq({ action: 'start', title: 'Plan task', mode: 'plan' });
+  assert.equal(engine.isPlanMode(), true);
+
+  // Invalid set_mode -> 400
+  const badMode = await sendReq({ action: 'set_mode', mode: 'unknown' });
+  assert.equal(badMode.statusCode, 400);
+
+  // Valid approve_plan -> 200, switched to act mode, resumed agent
+  const approved = await sendReq({ action: 'approve_plan' });
+  assert.equal(approved.statusCode, 200);
+  assert.equal(approved.body.ok, true);
+  assert.equal(approved.body.state.mode, 'act');
+  assert.equal(approved.body.state.state, 'RUNNING');
+  assert.equal(engine.isPlanMode(), false);
+  assert.ok(resumedPrompt && resumedPrompt.includes('Plan approved'));
+
+  // Switch back to plan mode via set_mode
+  const backToPlan = await sendReq({ action: 'set_mode', mode: 'plan' });
+  assert.equal(backToPlan.statusCode, 200);
+  assert.equal(backToPlan.body.state.mode, 'plan');
+  assert.equal(backToPlan.body.state.state, 'PLANNING');
+  assert.equal(engine.isPlanMode(), true);
+});
