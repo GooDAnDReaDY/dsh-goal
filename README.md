@@ -137,6 +137,14 @@ Handles `/goal` commands and subcommands:
 * **Plugin Settings Card**: Schemastery-backed settings UI registered via `settings.plugin.item`.
 
 ### 5. Two-Phase Goal Execution: Plan Mode ⇄ Act Mode (#162)
+
+### 6. Acceptance Gate & Critic Verification (#163)
+* **Automated Phase Verification**: Attach an optional `verificationCommand` (e.g. `npm test`, `pytest`, `cargo test`) to any milestone.
+* **Failure Blocking & Diagnostic Feedback**: When the agent attempts to complete a milestone via `goal_milestones action: 'complete'` or `goal_update_progress status: 'completed'`, the command executes inside confined `safeCwd`. If tests fail (`exitCode !== 0`), completion is blocked, the milestone remains open, and diagnostic failure output is returned as actionable feedback to the agent.
+* **Atomic Completion & Snapshots**: Git checkpoint snapshotting and issue checklist synchronization only trigger once the verification command passes with exit code 0.
+* **UI Visual Badges**: Visual indicator `🛡️ <command>` and failure alerts rendered in the Goal Details modal.
+
+
 * **Plan Mode (Read-Only Planning Phase)**: The agent explores the codebase, searches the web, and decomposes tasks into structured milestones and checklists. All file mutating tools (`write_to_file`, `replace_file_content`, mutating shell commands) are strictly blocked by `lib/tool-guard.js`.
 * **Act Mode (Implementation Phase)**: The operator reviews and approves the plan directly via the banner or details modal with «Approve & Execute», unlocking mutating capabilities and resuming the agent.
 * **REST API & Quick Launch**: Toggle modes on demand via `POST /dsh-goal/action` (`set_mode`, `approve_plan`), or select initial mode directly in the Quick Launch dialog.
