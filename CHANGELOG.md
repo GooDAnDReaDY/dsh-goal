@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.28
+
+### Added (Acceptance Gate / Critic Verification #163)
+- **Automated Milestone Verification Engine (`lib/engine-verification.js`) (#163)**: Safe execution runner executing verification commands in confined `safeCwd` with a 30s timeout and 1MB buffer limit, returning structured output diagnostics.
+- **Milestone Definition Gate (`verificationCommand`) (#163)**: Milestones now support an optional `verificationCommand` string (e.g. `npm test`, `pytest`, linter or build commands).
+- **Atomic Critic Verification Gate in GoalEngine & MilestoneManager (#163)**: When an agent attempts to mark a milestone as completed (`goal_milestones action: 'complete'` or `goal_update_progress status: 'completed'`), the verification command is executed automatically. If verification fails (`exitCode !== 0` or timeout), milestone completion is blocked, the milestone remains open, `target.verificationError` is recorded, and diagnostic feedback is returned to the agent. Git snapshots and issue checklist synchronization only proceed upon passing (exit code 0).
+- **Client UI Gate Badge & Error Display (#163)**: Added `🛡️ <command>` verification gate chip badge in `GoalDetailsModal` and styled diagnostic failure error warning blocks (`.dsh-goal-gate-badge`, `.dsh-goal-gate-error`) using native DSH design tokens.
+- **Comprehensive Test Suite (#163)**: Added `test/acceptance-gate.test.mjs` with 5 extensive test suites covering execution outcomes, timeouts, state transitions, tool rejection feedback, and snapshot integrity (155 passing tests).
+
 ## 0.2.27
 
 ### Added (Two-Phase Goal Execution: Plan Mode ⇄ Act Mode #162)
