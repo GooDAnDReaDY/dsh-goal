@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.27
+
+### Added (Two-Phase Goal Execution: Plan Mode ⇄ Act Mode #162)
+- **Goal Engine Two-Phase Lifecycle (#162)**: Added `GoalMode.PLAN ('plan')` and `GoalMode.ACT ('act')` states and `GoalState.PLANNING`. Goals can be initialized in `plan` or `act` mode via `options.mode`.
+- **Tool Execution Guard in Plan Mode (#162)**: Implemented `lib/tool-guard.js` restricting file-mutating operations (`write_to_file`, `replace_file_content`, `edit_file`, `apply_diff` and mutating shell commands) during the planning phase. Read-only inspection tools (`view_file`, `search_web`, `read_url_content`, `grep`, `glob`, `find`), planning tools (`goal_milestones`, `goal_checklist`, `get_goal`), and non-mutating terminal inspection are permitted.
+- **REST API Actions (#162)**: Extended `POST /dsh-goal/action` with `set_mode` (`{ mode: 'plan' | 'act' }`) and `approve_plan`. Approving a plan seamlessly switches the goal to `GoalMode.ACT` / `GoalState.RUNNING` and resumes the agent with a confirmation prompt.
+- **Client UI Plan Mode Badges & Controls (#162)**: Added `dsh-goal-badge-plan` in sticky banner and compact pill dock; added primary «Approve & Execute» / «批准并执行» button; added planning phase notice banner in `GoalDetailsModal`; added mode toggle (`Act Mode` / `Plan Mode`) in `QuickLaunchModal`. Pure DSH tokens used with zero hardcoded colors.
+- **Testing & Verification (#162)**: Added 12 unit and integration tests in `test/plan-act-mode.test.mjs`; all 150 tests in suite pass 100%.
+
 ## 0.2.26
 
 ### Fixed & Hardened (Critical Security Hotfix: Connection Authentication & Fail-Closed Boundary)
