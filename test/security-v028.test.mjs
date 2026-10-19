@@ -30,7 +30,7 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
     headers: { host: '192.168.1.111:3080', 'sec-fetch-site': 'same-origin' }
   }), false);
 
-  // sec-fetch-site with matching Origin is accepted
+  // Issue #172: Unauthenticated LAN requests fail closed even with same-origin headers
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: {
@@ -38,7 +38,18 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
       'sec-fetch-site': 'same-origin',
       origin: 'http://192.168.1.111:3080',
     }
-  }), true);
+  }), false);
+
+  // Issue #172: Authenticated LAN request via connection service is accepted
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.50' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    }
+  }, { connection: { requestRejection: () => undefined } }), true);
+
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: { host: '192.168.1.111:3080', 'sec-fetch-site': 'cross-site' }
@@ -64,7 +75,7 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
     headers: { host: '192.168.1.111:3080', referer: 'http://evil.com/leak' }
   }), false);
 
-  // Origin matching with sec-fetch-site: same-origin (browser operator UI) is accepted
+  // Issue #172: Unauthenticated LAN caller without session fails closed
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: {
@@ -72,7 +83,18 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
       'sec-fetch-site': 'same-origin',
       origin: 'http://192.168.1.111:3080'
     }
-  }), true);
+  }), false);
+
+  // Issue #172: Authenticated session via connection service is accepted
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.50' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080'
+    }
+  }, { connection: { requestRejection: () => undefined } }), true);
+
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.50' },
     headers: {
@@ -80,7 +102,7 @@ test('Issue #78: isLoopback and isTrustedCaller helper units', () => {
       'sec-fetch-site': 'same-origin',
       referer: 'http://192.168.1.111:3080/app'
     }
-  }), true);
+  }, { connection: { requestRejection: () => undefined } }), true);
 });
 
 test('Issue #78: POST /dsh-goal/action rejects untrusted LAN callers without valid origin or sec-fetch-site', async () => {
@@ -137,14 +159,14 @@ test('Issue #78: POST /dsh-goal/action rejects untrusted LAN callers without val
     routeHandler(req, res);
   });
 
-  // Untrusted LAN caller with no Sec-Fetch-Site and no Origin
+  // Untrusted LAN caller with no Sec-Fetch-Site and no Origin (fail-closed 401, #172)
   const resUntrusted = await sendReq({
     remoteAddress: '192.168.1.55',
     headers: {},
     body: { action: 'clear' }
   });
-  assert.equal(resUntrusted.statusCode, 403);
-  assert.equal(resUntrusted.body.error, 'Forbidden: untrusted caller origin');
+  assert.equal(resUntrusted.statusCode, 401);
+  assert.equal(resUntrusted.body.error, 'Unauthorized: authentication required');
 
   // Loopback caller succeeds without Origin header
   const resLoopback = await sendReq({
@@ -154,16 +176,29 @@ test('Issue #78: POST /dsh-goal/action rejects untrusted LAN callers without val
   });
   assert.equal(resLoopback.statusCode, 200);
 
-  // LAN caller with Sec-Fetch-Site alone without matching Origin is rejected (Issue #78)
+  // LAN caller with Sec-Fetch-Site alone without session is rejected (Issue #78, #172)
   const resSameOriginSec = await sendReq({
     remoteAddress: '192.168.1.55',
     headers: { 'sec-fetch-site': 'same-origin' },
     body: { action: 'clear' }
   });
-  assert.equal(resSameOriginSec.statusCode, 403);
-  assert.equal(resSameOriginSec.body.error, 'Forbidden: untrusted caller origin');
+  assert.equal(resSameOriginSec.statusCode, 401);
+  assert.equal(resSameOriginSec.body.error, 'Unauthorized: authentication required');
 
-  // LAN caller with matching Origin succeeds
+  // LAN caller without connection authentication fails closed with 401 (#172)
+  const resUnauthOrigin = await sendReq({
+    remoteAddress: '192.168.1.55',
+    headers: {
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+    body: { action: 'clear' }
+  });
+  assert.equal(resUnauthOrigin.statusCode, 401);
+  assert.equal(resUnauthOrigin.body.error, 'Unauthorized: authentication required');
+
+  // Issue #172: Authenticated connection admits same-origin LAN request
+  mockCtx.connection = { requestRejection: () => undefined };
   const resValidOrigin = await sendReq({
     remoteAddress: '192.168.1.55',
     headers: {
@@ -173,6 +208,19 @@ test('Issue #78: POST /dsh-goal/action rejects untrusted LAN callers without val
     body: { action: 'clear' }
   });
   assert.equal(resValidOrigin.statusCode, 200);
+
+  // Issue #172: Rejected connection returns 401
+  mockCtx.connection = { requestRejection: () => 401 };
+  const resRejOrigin = await sendReq({
+    remoteAddress: '192.168.1.55',
+    headers: {
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+    body: { action: 'clear' }
+  });
+  assert.equal(resRejOrigin.statusCode, 401);
+  delete mockCtx.connection;
 
   // LAN caller with Sec-Fetch-Site: cross-site gets 403
   const resCrossSiteSec = await sendReq({

@@ -60,36 +60,36 @@ test('Issue #78: GET endpoints and SSE reject untrusted callers', async () => {
     routeHandler(req, res);
   });
 
-  // 1. GET /dsh-goal/events from untrusted LAN caller rejected with 403
+  // 1. GET /dsh-goal/events from untrusted LAN caller rejected with 401 (#172)
   const resEventsUntrusted = await sendReq('/dsh-goal/events', {
     remoteAddress: '192.168.1.55',
     headers: {},
   });
-  assert.equal(resEventsUntrusted.statusCode, 403);
-  assert.equal(resEventsUntrusted.body.error, 'Forbidden: untrusted caller origin');
+  assert.equal(resEventsUntrusted.statusCode, 401);
+  assert.equal(resEventsUntrusted.body.error, 'Unauthorized: authentication required');
 
-  // 2. GET /dsh-goal/templates from untrusted LAN caller rejected with 403
+  // 2. GET /dsh-goal/templates from untrusted LAN caller rejected with 401 (#172)
   const resTemplatesUntrusted = await sendReq('/dsh-goal/templates', {
     remoteAddress: '192.168.1.55',
     headers: {},
   });
-  assert.equal(resTemplatesUntrusted.statusCode, 403);
-  assert.equal(resTemplatesUntrusted.body.error, 'Forbidden: untrusted caller origin');
+  assert.equal(resTemplatesUntrusted.statusCode, 401);
+  assert.equal(resTemplatesUntrusted.body.error, 'Unauthorized: authentication required');
 
-  // 3. GET /dsh-goal/state from untrusted LAN caller rejected with 403
+  // 3. GET /dsh-goal/state from untrusted LAN caller rejected with 401 (#172)
   const resStateUntrusted = await sendReq('/dsh-goal/state', {
     remoteAddress: '192.168.1.55',
     headers: {},
   });
-  assert.equal(resStateUntrusted.statusCode, 403);
-  assert.equal(resStateUntrusted.body.error, 'Forbidden: untrusted caller origin');
+  assert.equal(resStateUntrusted.statusCode, 401);
+  assert.equal(resStateUntrusted.body.error, 'Unauthorized: authentication required');
 
-  // 4. GET /dsh-goal/state with forged sec-fetch-site from LAN rejected with 403
+  // 4. GET /dsh-goal/state with forged sec-fetch-site from LAN rejected with 401 (#172)
   const resStateForged = await sendReq('/dsh-goal/state', {
     remoteAddress: '192.168.1.55',
     headers: { 'sec-fetch-site': 'same-origin' },
   });
-  assert.equal(resStateForged.statusCode, 403);
+  assert.equal(resStateForged.statusCode, 401);
 
   // 5. GET /dsh-goal/state from loopback succeeds with 200
   const resStateLoopback = await sendReq('/dsh-goal/state', {
@@ -98,8 +98,8 @@ test('Issue #78: GET endpoints and SSE reject untrusted callers', async () => {
   });
   assert.equal(resStateLoopback.statusCode, 200);
 
-  // 6. GET /dsh-goal/state from LAN browser with same-origin header and matching origin succeeds with 200
-  const resStateOrigin = await sendReq('/dsh-goal/state', {
+  // 6. GET /dsh-goal/state from LAN browser without session fails closed with 401 (#172)
+  const resStateOriginNoAuth = await sendReq('/dsh-goal/state', {
     remoteAddress: '192.168.1.55',
     headers: {
       host: '192.168.1.111:3000',
@@ -107,9 +107,9 @@ test('Issue #78: GET endpoints and SSE reject untrusted callers', async () => {
       origin: 'http://192.168.1.111:3000',
     },
   });
-  assert.equal(resStateOrigin.statusCode, 200);
+  assert.equal(resStateOriginNoAuth.statusCode, 401);
 
-  // 7. GET /dsh-goal/state from LAN without sec-fetch-site: same-origin is rejected (#148)
+  // 7. GET /dsh-goal/state from LAN without sec-fetch-site: same-origin is rejected (#148, #172)
   const resStateLanCurl = await sendReq('/dsh-goal/state', {
     remoteAddress: '192.168.1.55',
     headers: {
@@ -117,7 +117,32 @@ test('Issue #78: GET endpoints and SSE reject untrusted callers', async () => {
       origin: 'http://192.168.1.111:3000',
     },
   });
-  assert.equal(resStateLanCurl.statusCode, 403);
+  assert.equal(resStateLanCurl.statusCode, 401);
+
+  // 8. Authenticated connection admits same-origin LAN browser request (#172)
+  mockCtx.connection = { requestRejection: () => undefined };
+  const resStateOriginAuth = await sendReq('/dsh-goal/state', {
+    remoteAddress: '192.168.1.55',
+    headers: {
+      host: '192.168.1.111:3000',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3000',
+    },
+  });
+  assert.equal(resStateOriginAuth.statusCode, 200);
+
+  // 9. Rejected connection returns 401 (#172)
+  mockCtx.connection = { requestRejection: () => 401 };
+  const resStateOriginRej = await sendReq('/dsh-goal/state', {
+    remoteAddress: '192.168.1.55',
+    headers: {
+      host: '192.168.1.111:3000',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3000',
+    },
+  });
+  assert.equal(resStateOriginRej.statusCode, 401);
+  delete mockCtx.connection;
 });
 
 test('Issue #79: POST start rejects unconfined or attacker-controlled cwd', async () => {
