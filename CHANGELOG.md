@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.26
+
+### Fixed & Hardened (Critical Security Hotfix: Connection Authentication & Fail-Closed Boundary)
+- **Canonical DSH Connection Authentication Gate (#172)**: Integrated `ctx.connection.requestRejection(req)` in `getRequestRejection` across all plugin HTTP and SSE endpoints (`/dsh-goal/events`, `/dsh-goal/templates`, `/dsh-goal/state`, `/dsh-goal/action`), delegating session authentication to DSH core's authoritative cookie session engine.
+- **Fail-Closed LAN Authentication Boundary (#172)**: Eliminated unauthenticated LAN access shortcut. Unauthenticated remote LAN callers lacking valid DSH browser session or explicit auth token are rejected fail-closed with HTTP `401 Unauthorized` or `403 Forbidden`, preventing unauthorized goal reading and autonomous agent prompt injection.
+- **Loopback & Token Exemption Preservation (#172)**: Retained loopback peer validation (`127.0.0.1`, `::1`) for local CLI monitoring and deployment verification (`deploy.sh verify web`); preserved explicit auth token support (`x-dsh-auth-token` and `Authorization: Bearer <token>`).
+- **CSRF & DNS Rebinding Secondary Defense (#172)**: Maintained secondary CSRF defense (`sec-fetch-site` cross-site rejection, matching `Origin`/`Host`) and strict private host validation (`isTrustedHost`).
+- **Design Contract & Security Suite (#172)**: Updated `docs/design/DESIGN.md` Section 5.1 and expanded test suites (`test/security-sanitization-batch.test.mjs`, `test/security-v028.test.mjs`, `test/v0211-fixes.test.mjs`) to 100% pass across all 138 tests.
+
 ## 0.2.25
 
 ### Fixed & Hardened (Security & DNS Rebinding Guard)
