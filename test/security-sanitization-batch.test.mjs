@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 import { resolveGiteaAuth, resolveRepoInfo, syncMilestoneWithIssue } from '../lib/engine-issue-sync.js';
-import { isTrustedCaller, isTrustedHost, registerRoutes } from '../lib/routes.js';
+import { isTrustedCaller, isTrustedHost, registerRoutes, getRequestRejection, getConnection } from '../lib/routes.js';
 import { isValidGitRef, isGitRepository, createGoalBranch, mergeGoalBranch, discardGoalBranch } from '../lib/engine-git-branch.js';
 import { getSafeCwd, MilestoneStatus } from '../lib/goal-engine-constants.js';
 import { GoalEngine } from '../lib/goal-engine.js';
@@ -83,7 +83,7 @@ test('Issues #122, #144, #148: isTrustedCaller fail-closed LAN caller protection
     },
   }), false);
 
-  // Browser UI request from LAN with verified same-origin header is ACCEPTED
+  // Issue #172: Unauthenticated LAN requests fail closed even with same-origin headers
   assert.equal(isTrustedCaller({
     socket: { remoteAddress: '192.168.1.150' },
     headers: {
@@ -91,7 +91,36 @@ test('Issues #122, #144, #148: isTrustedCaller fail-closed LAN caller protection
       'sec-fetch-site': 'same-origin',
       origin: 'http://192.168.1.111:3080',
     },
-  }), true);
+  }), false);
+
+  // Issue #172: Authenticated LAN request admitted via DSH connection service
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+  }, { connection: { requestRejection: () => undefined } }), true);
+
+  // Issue #172: Connection service rejecting with 401/403 fails closed
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+  }, { connection: { requestRejection: () => 401 } }), false);
+
+  assert.equal(isTrustedCaller({
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+  }, { connection: { requestRejection: () => 403 } }), false);
 
   // Loopback callers are ACCEPTED
   assert.equal(isTrustedCaller({
@@ -335,4 +364,57 @@ test('Issue #125: createMilestoneCheckpoint does not use --no-verify and stages 
   assert.equal(code.includes("'--no-verify'"), false, "Must not contain '--no-verify'");
   assert.equal(code.includes("'-A'"), false, "Must not use git add -A");
   assert.ok(code.includes("'-u'"), "Must use git add -u for tracked changes");
+});
+
+test('Issue #172: getRequestRejection enforces connection authentication and fail-closed boundary', () => {
+  const lanReq = {
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://192.168.1.111:3080',
+    },
+  };
+
+  // 1. Unauthenticated LAN request returns 401
+  assert.equal(getRequestRejection(lanReq), 401);
+
+  // 2. Admitted session returns undefined
+  assert.equal(getRequestRejection(lanReq, { connection: { requestRejection: () => undefined } }), undefined);
+
+  // 3. Rejected session returns 401 / 403
+  assert.equal(getRequestRejection(lanReq, { connection: { requestRejection: () => 401 } }), 401);
+  assert.equal(getRequestRejection(lanReq, { connection: { requestRejection: () => 403 } }), 403);
+
+  // 4. Thrown error in connection service fails closed with 403
+  assert.equal(getRequestRejection(lanReq, { connection: { requestRejection: () => { throw new Error('crash'); } } }), 403);
+
+  // 5. Cross-site request is rejected with 403 even with admitted connection
+  const crossSiteReq = {
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'cross-site',
+      origin: 'http://192.168.1.111:3080',
+    },
+  };
+  assert.equal(getRequestRejection(crossSiteReq, { connection: { requestRejection: () => undefined } }), 403);
+
+  // 6. DNS rebinding host rejected with 403
+  const dnsRebindReq = {
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: 'attacker.com',
+      'sec-fetch-site': 'same-origin',
+      origin: 'http://attacker.com',
+    },
+  };
+  assert.equal(getRequestRejection(dnsRebindReq, { connection: { requestRejection: () => undefined } }), 403);
+
+  // 7. Loopback caller returns undefined
+  const loopbackReq = {
+    socket: { remoteAddress: '127.0.0.1' },
+    headers: { host: '127.0.0.1:3080' },
+  };
+  assert.equal(getRequestRejection(loopbackReq), undefined);
 });
