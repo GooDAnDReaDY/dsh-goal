@@ -38,6 +38,9 @@
         mergeBranch: 'Merge Branch',
         discardBranch: 'Discard Branch',
         retrospectiveTitle: 'Goal Retrospective',
+        verificationGate: 'Acceptance gate',
+        verificationPassed: 'Verified',
+        verificationFailed: 'Gate failed',
         templatesTitle: 'Goal Templates',
         waitingPrereq: 'waiting for prereq',
 
@@ -186,6 +189,9 @@
         mergeBranch: '合并分支',
         discardBranch: '放弃分支',
         retrospectiveTitle: '目标复盘报告',
+        verificationGate: '验收门禁',
+        verificationPassed: '已验证',
+        verificationFailed: '门禁未通过',
         templatesTitle: '目标模板',
         waitingPrereq: '等待前置依赖',
 

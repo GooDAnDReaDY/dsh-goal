@@ -470,16 +470,33 @@
                           },
 
                           `${i + 1}. ${m.title}`,
-                            Array.isArray(m.dependsOn) && m.dependsOn.some((depId) => {
-                              const prereq = milestones.find((x) => x.id === depId || x.title === depId);
-                              return prereq && prereq.status !== 'completed';
-                            })
-                              ? React.createElement('span', { className: 'dsh-goal-lock-badge' }, `🔒 ${t('waitingPrereq') || 'waiting for prereq'}`)
-                              : null,
+                          m.verificationCommand
+                            ? React.createElement(
+                                'span',
+                                {
+                                  className: 'dsh-goal-gate-badge',
+                                  title: `${t('verificationGate') || 'Acceptance gate'}: ${m.verificationCommand}`,
+                                },
+                                `🛡️ ${m.verificationCommand}`
+                              )
+                            : null,
+                          Array.isArray(m.dependsOn) && m.dependsOn.some((depId) => {
+                            const prereq = milestones.find((x) => x.id === depId || x.title === depId);
+                            return prereq && prereq.status !== 'completed';
+                          })
+                            ? React.createElement('span', { className: 'dsh-goal-lock-badge' }, `🔒 ${t('waitingPrereq') || 'waiting for prereq'}`)
+                            : null,
 
                         ),
 
                         m.notes ? React.createElement('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-tertiary)', marginTop: 2 } }, m.notes) : null,
+                        m.verificationError
+                          ? React.createElement(
+                              'div',
+                              { className: 'dsh-goal-gate-error' },
+                              `⚠️ ${t('verificationFailed') || 'Gate failed'}: ${m.verificationError}`
+                            )
+                          : null,
 
                         Array.isArray(m.checklist) && m.checklist.length > 0
                           ? React.createElement(
