@@ -136,6 +136,11 @@ Handles `/goal` commands and subcommands:
 * **Quick Launch Button**: Floating launcher for rapid goal formulation without typing slash commands.
 * **Plugin Settings Card**: Schemastery-backed settings UI registered via `settings.plugin.item`.
 
+### 5. Two-Phase Goal Execution: Plan Mode ⇄ Act Mode (#162)
+* **Plan Mode (Read-Only Planning Phase)**: The agent explores the codebase, searches the web, and decomposes tasks into structured milestones and checklists. All file mutating tools (`write_to_file`, `replace_file_content`, mutating shell commands) are strictly blocked by `lib/tool-guard.js`.
+* **Act Mode (Implementation Phase)**: The operator reviews and approves the plan directly via the banner or details modal with «Approve & Execute», unlocking mutating capabilities and resuming the agent.
+* **REST API & Quick Launch**: Toggle modes on demand via `POST /dsh-goal/action` (`set_mode`, `approve_plan`), or select initial mode directly in the Quick Launch dialog.
+
 ---
 
 ## 📦 Installation

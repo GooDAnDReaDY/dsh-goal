@@ -54,6 +54,7 @@
 * 🔄 **DSH 核心目标工具无缝拦截与兼容 (*v0.1.10 新增*)**: 为使用原生 DSH 目标控制指令的模型提供完美向下兼容，透明接管 `update_goal`、`get_goal`、`create_goal`。拦截并处理 `complete`、`pause`、`resume`、`edit`、`blocked` 等操作，彻底解决原生工具抛出的 `complete and blocked require a direct human turn` 权限崩溃错误，所有状态直接同步至 GoalEngine。
 * 🛡️ **安全防护机制**：支持自定义最大迭代次数（`maxIterations`）以及智能卡顿检测（Smart Progress Guard）。
 * 🔔 **Web Audio 提示音**：任务完成或失败时，通过 Web Audio API 播放舒缓的合成音效。
+* 📋 **两阶段目标模式：Plan Mode ⇄ Act Mode (*#162*)**：分离规划设计与落地执行。只读规划阶段严格限制文件变更与危险命令，待操作者在横幅或弹窗点击“批准并执行 (Approve & Execute)”后切入执行阶段。
 
 ---
 
