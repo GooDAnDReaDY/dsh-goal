@@ -512,9 +512,9 @@
 
                 onClose: () => setIsQuickLaunchOpen(false),
 
-                onStart: async (title) => {
+                onStart: async (title, opts) => {
 
-                  await handleAction('start', { title });
+                  await handleAction('start', { title, mode: opts?.mode });
 
                   setIsQuickLaunchOpen(false);
 
@@ -533,6 +533,8 @@
       const isPaused = state.state === 'PAUSED';
 
       const isCompleted = state.state === 'COMPLETED';
+
+      const isPlanMode = state.mode === 'plan' || state.state === 'PLANNING';
 
       const formatElapsed = (totalSeconds) => {
         const s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
@@ -588,11 +590,21 @@
                 ),
                 React.createElement(
                   'span',
-                  { className: `dsh-goal-badge ${isCompleted ? 'dsh-goal-badge-ok' : isPaused ? 'dsh-goal-badge-warn' : ''}` },
-                  isCompleted ? (t('goalCompleted') || 'Done') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Goal')
+                  { className: `dsh-goal-badge ${isCompleted ? 'dsh-goal-badge-ok' : isPlanMode ? 'dsh-goal-badge-plan' : isPaused ? 'dsh-goal-badge-warn' : ''}` },
+                  isCompleted ? (t('goalCompleted') || 'Done') : isPlanMode ? (t('planMode') || 'Plan Mode') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Goal')
                 ),
                 React.createElement('span', { className: 'dsh-goal-title', title: state.title }, state.title),
                 React.createElement('span', { className: 'dsh-goal-time' }, `⏱ ${liveElapsedStr}`),
+                isPlanMode && !isCompleted ? React.createElement(
+                  'button',
+                  {
+                    className: 'dsh-goal-btn dsh-goal-btn-approve',
+                    style: { padding: '2px 6px', height: 22, fontSize: 11 },
+                    title: t('approveAndExecute') || 'Approve & Execute',
+                    onClick: () => handleAction('approve_plan'),
+                  },
+                  '✓ ' + (t('approveAndExecute') || 'Approve')
+                ) : null,
                 !isCompleted ? React.createElement(
                   'button',
                   {
@@ -652,11 +664,11 @@
 
                 {
 
-                  className: `dsh-goal-badge ${isCompleted ? 'dsh-goal-badge-ok' : isPaused ? 'dsh-goal-badge-warn' : ''}`,
+                  className: `dsh-goal-badge ${isCompleted ? 'dsh-goal-badge-ok' : isPlanMode ? 'dsh-goal-badge-plan' : isPaused ? 'dsh-goal-badge-warn' : ''}`,
 
                 },
 
-                isCompleted ? (t('goalCompleted') || 'Goal completed') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Current goal'),
+                isCompleted ? (t('goalCompleted') || 'Goal completed') : isPlanMode ? (t('planMode') || 'Plan Mode') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Current goal'),
 
               ),
 
@@ -680,6 +692,18 @@
 
               ),
 
+              isPlanMode && !isCompleted
+                ? React.createElement(
+                    'button',
+                    {
+                      className: 'dsh-goal-btn dsh-goal-btn-approve',
+                      style: { fontSize: 12, padding: '2px 8px' },
+                      title: t('approveAndExecute') || 'Approve & Execute',
+                      onClick: () => handleAction('approve_plan'),
+                    },
+                    '✓ ' + (t('approveAndExecute') || 'Approve & Execute')
+                  )
+                : null,
               !isCompleted
 
                 ? React.createElement(

@@ -336,6 +336,66 @@
 
       }
 
+      .dsh-goal-badge-plan {
+
+        border-color: var(--dsw-alias-brand-primary);
+
+        color: var(--dsw-alias-brand-primary);
+
+        background: var(--dsw-alias-bg-hover);
+
+      }
+
+      .dsh-goal-badge-act {
+
+        border-color: var(--dsw-alias-state-success-primary);
+
+        color: var(--dsw-alias-state-success-primary);
+
+        background: var(--dsw-alias-bg-hover);
+
+      }
+
+      .dsh-goal-btn-approve {
+
+        background: var(--dsw-alias-state-success-primary) !important;
+
+        color: var(--dsw-alias-bg-layer-3) !important;
+
+        font-weight: 600 !important;
+
+        border: none !important;
+
+        cursor: pointer;
+
+      }
+
+      .dsh-goal-btn-approve:hover {
+
+        opacity: 0.88;
+
+      }
+
+      .dsh-goal-plan-banner {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        padding: 8px 12px;
+
+        margin-bottom: 12px;
+
+        border-radius: 6px;
+
+        background: var(--dsw-alias-bg-hover);
+
+        border: 1px solid var(--dsw-alias-brand-primary);
+
+      }
+
       .dsh-goal-label {
 
         font-weight: 600;

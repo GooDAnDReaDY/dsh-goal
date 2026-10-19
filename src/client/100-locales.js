@@ -138,6 +138,15 @@
         toolFailHint: 'Auto-pause goal if N consecutive turns hit tool execution errors (0 to disable)',
 
         notifLabel: 'Native browser desktop notifications on completion',
+        planMode: 'Plan Mode',
+        actMode: 'Act Mode',
+        approveAndExecute: 'Approve & Execute',
+        switchToPlan: 'Switch to Plan Mode',
+        planningPhase: 'Planning Phase (Read-Only)',
+        planPhaseNotice: 'Agent is formulating the plan. File modifications are guarded until operator approval.',
+        launchModeLabel: 'Launch Mode:',
+        planModeDesc: 'Plan first, review milestones, then execute',
+        actModeDesc: 'Direct execution right away',
 
       },
 
@@ -277,6 +286,15 @@
         toolFailHint: '连续 N 轮遭遇工具调用错误时自动暂停（0 表示禁用）',
 
         notifLabel: '目标完成时发送浏览器桌面原生通知',
+        planMode: '规划模式',
+        actMode: '执行模式',
+        approveAndExecute: '批准并执行',
+        switchToPlan: '切换到规划模式',
+        planningPhase: '规划阶段（只读）',
+        planPhaseNotice: '智能体正在制定方案与里程碑。在操作者批准前，禁止修改文件。',
+        launchModeLabel: '启动模式：',
+        planModeDesc: '先制定里程碑方案，人工确认后再执行',
+        actModeDesc: '立即开始编码与任务执行',
 
       },
 

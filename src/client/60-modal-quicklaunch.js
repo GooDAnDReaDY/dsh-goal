@@ -3,6 +3,7 @@
     function QuickLaunchModal({ onClose, onStart, t }) {
 
       const [title, setTitle] = useState('');
+      const [launchMode, setLaunchMode] = useState('act');
       const [showTemplates, setShowTemplates] = useState(false);
       const [backendTemplates, setBackendTemplates] = useState([]);
       const [selectedTpl, setSelectedTpl] = useState(null);
@@ -62,7 +63,7 @@
 
         if (trimmed) {
 
-          onStart(trimmed);
+          onStart(trimmed, { mode: launchMode });
 
         }
 
@@ -138,6 +139,34 @@
 
                 t('quickLaunchDesc') || 'Define the objective for the agent in autonomous mode:',
 
+              ),
+
+              React.createElement(
+                'div',
+                { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 } },
+                React.createElement('span', { style: { fontSize: 12, fontWeight: 600, color: 'var(--dsw-alias-label-secondary)' } }, t('launchModeLabel') || 'Mode:'),
+                React.createElement(
+                  'button',
+                  {
+                    type: 'button',
+                    className: `dsh-goal-chip-btn ${launchMode === 'act' ? 'active' : ''}`,
+                    style: launchMode === 'act' ? { fontWeight: 600, borderColor: 'var(--dsw-alias-state-success-primary)', color: 'var(--dsw-alias-state-success-primary)' } : {},
+                    onClick: () => setLaunchMode('act'),
+                    title: t('actModeDesc') || 'Direct execution right away',
+                  },
+                  '⚡ ' + (t('actMode') || 'Act Mode')
+                ),
+                React.createElement(
+                  'button',
+                  {
+                    type: 'button',
+                    className: `dsh-goal-chip-btn ${launchMode === 'plan' ? 'active' : ''}`,
+                    style: launchMode === 'plan' ? { fontWeight: 600, borderColor: 'var(--dsw-alias-brand-primary)', color: 'var(--dsw-alias-brand-primary)' } : {},
+                    onClick: () => setLaunchMode('plan'),
+                    title: t('planModeDesc') || 'Plan first, review milestones, then execute',
+                  },
+                  '📋 ' + (t('planMode') || 'Plan Mode')
+                )
               ),
 
               React.createElement(

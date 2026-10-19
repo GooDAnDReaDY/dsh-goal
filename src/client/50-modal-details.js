@@ -7,6 +7,7 @@
       const milestones = state.milestones || [];
 
       const isCompleted = state.state === 'COMPLETED';
+      const isPlanMode = state.mode === 'plan' || state.state === 'PLANNING';
 
       const [copied, setCopied] = useState(false);
 
@@ -143,6 +144,36 @@
               state.description ? React.createElement('div', { style: { color: 'var(--dsw-alias-label-secondary)', fontSize: 13, marginBottom: 6, lineHeight: 1.4 } }, state.description) : null,
 
             ),
+
+            isPlanMode && !isCompleted
+              ? React.createElement(
+                  'div',
+                  { className: 'dsh-goal-plan-banner' },
+                  React.createElement(
+                    'div',
+                    { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
+                    React.createElement(
+                      'div',
+                      { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                      React.createElement('span', { className: 'dsh-goal-badge dsh-goal-badge-plan' }, t('planMode') || 'Plan Mode'),
+                      React.createElement('strong', { style: { fontSize: 13, color: 'var(--dsw-alias-brand-primary)' } }, t('planningPhase') || 'Planning Phase (Read-Only)')
+                    ),
+                    React.createElement('span', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary)' } }, t('planPhaseNotice') || 'Agent is formulating the plan. File modifications are guarded until operator approval.')
+                  ),
+                  React.createElement(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'dsh-goal-btn dsh-goal-btn-approve',
+                      style: { padding: '6px 14px', fontSize: 12 },
+                      onClick: async () => {
+                        await onAction('approve_plan');
+                      },
+                    },
+                    '✓ ' + (t('approveAndExecute') || 'Approve & Execute')
+                  )
+                )
+              : null,
 
             !isCompleted
 
@@ -711,6 +742,20 @@
 
                 )
 
+              : null,
+
+            isPlanMode && !isCompleted
+              ? React.createElement(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'dsh-goal-btn dsh-goal-btn-approve',
+                    onClick: async () => {
+                      await onAction('approve_plan');
+                    },
+                  },
+                  '✓ ' + (t('approveAndExecute') || 'Approve & Execute')
+                )
               : null,
 
             React.createElement(
