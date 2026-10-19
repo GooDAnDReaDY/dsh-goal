@@ -55,6 +55,7 @@
 * 🛡️ **安全防护机制**：支持自定义最大迭代次数（`maxIterations`）以及智能卡顿检测（Smart Progress Guard）。
 * 🔔 **Web Audio 提示音**：任务完成或失败时，通过 Web Audio API 播放舒缓的合成音效。
 * 📋 **两阶段目标模式：Plan Mode ⇄ Act Mode (*#162*)**：分离规划设计与落地执行。只读规划阶段严格限制文件变更与危险命令，待操作者在横幅或弹窗点击“批准并执行 (Approve & Execute)”后切入执行阶段。
+* 🛡️ **自动化验收门禁与评审检验 (Critic Verification) (*#163*)**：里程碑可配置 `verificationCommand` 验证命令（如 `npm test`、`pytest`）。智能体尝试关闭阶段时，在受控 `safeCwd` 中自动执行检查；若失败（`exitCode != 0`）则阻断关闭并向模型反馈错误输出，仅当命令返回 0 时方可进入完成态并创建 Git 检查点。
 
 ---
 

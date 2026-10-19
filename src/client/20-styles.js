@@ -1246,5 +1246,28 @@
         margin-left: 6px;
       }
 
+      .dsh-goal-gate-badge {
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        background: var(--dsw-alias-bg-layer-4);
+        color: var(--dsw-alias-brand-primary);
+        border: 1px solid var(--dsw-alias-brand-primary);
+        margin-left: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .dsh-goal-gate-error {
+        font-size: 11px;
+        color: var(--dsw-alias-state-danger-primary);
+        margin-top: 3px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: var(--dsw-alias-bg-layer-2);
+        font-family: monospace;
+      }
+
     `;
 
