@@ -1,3 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(__dirname, '..');
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { GoalEngine, GoalState, GoalMode } from '../lib/goal-engine.js';
@@ -200,4 +206,24 @@ test('Task 3: POST /dsh-goal/action set_mode and approve_plan', async () => {
   assert.equal(backToPlan.body.state.mode, 'plan');
   assert.equal(backToPlan.body.state.state, 'PLANNING');
   assert.equal(engine.isPlanMode(), true);
+});
+
+test('Task 4: client UI fragments and bundle contain Plan Mode badges and approve action', () => {
+  const clientPath = path.join(rootDir, 'lib', 'client.js');
+  const clientContent = fs.readFileSync(clientPath, 'utf8');
+
+  // Badge CSS classes
+  assert.ok(clientContent.includes('.dsh-goal-badge-plan'), 'Must include .dsh-goal-badge-plan');
+  assert.ok(clientContent.includes('.dsh-goal-badge-act'), 'Must include .dsh-goal-badge-act');
+  assert.ok(clientContent.includes('.dsh-goal-btn-approve'), 'Must include .dsh-goal-btn-approve');
+  assert.ok(clientContent.includes('.dsh-goal-plan-banner'), 'Must include .dsh-goal-plan-banner');
+
+  // Locales
+  assert.ok(clientContent.includes("approveAndExecute: 'Approve & Execute'"), 'Must include English approveAndExecute');
+  assert.ok(clientContent.includes("approveAndExecute: '批准并执行'"), 'Must include Chinese approveAndExecute');
+  assert.ok(clientContent.includes("planMode: 'Plan Mode'"), 'Must include English planMode');
+  assert.ok(clientContent.includes("planMode: '规划模式'"), 'Must include Chinese planMode');
+
+  // Action dispatch
+  assert.ok(clientContent.includes("'approve_plan'"), 'Must trigger approve_plan action');
 });
