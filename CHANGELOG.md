@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.30
+
+### Added (Interactive HITL Operator Tool & Parameterized Quick Launch Templates #165, #166)
+- **Interactive Human-in-the-Loop Operator Tool (`goal_ask_operator`) (#166)**: Enables autonomous agents to ask structured clarification questions (`question`, `options`, `is_blocking`) when encountering architectural blockers or ambiguous specs. The goal enters a soft-paused state (`waitingForOperator: true`, `GoalState.PAUSED`) without burning token turns or iteration limits.
+- **Interactive Operator Card in UI (`GoalTopBanner`) (#166)**: Renders a dedicated query card with the question, single-click option buttons, and a text input for freeform answers. The compact dock pill indicates `❓ Input Needed`.
+- **Operator Decision Injected into Agent Context (#166)**: Submitting the answer via `POST /dsh-goal/action` (`action: 'answer_operator'`) resumes execution and injects `[OPERATOR RESPONSE TO YOUR QUERY]` into the model's next prompt turn.
+- **Parameterized Quick Launch Templates with Dynamic Variables (#165)**: Enhanced `QUICK_LAUNCH_TEMPLATES` with schema variables (`variables: [{ id, label, placeholder, required }]`) across all 10 engineering scenarios (`Fix Bug`, `Refactor`, `Tests`, `Review`, `Feature`, `Security`, etc.).
+- **Dynamic Variable Form in `QuickLaunchModal` (#165)**: Clicking a template chip reveals inline parameter fields, formatting the goal prompt dynamically with `formatTemplateVariables` in real time.
+- **Comprehensive Unit & Integration Test Suites (#165, #166)**: Added `test/hitl-operator.test.mjs` and `test/quicklaunch-variables.test.mjs` (168 tests passing with 0 failures, `lib/goal-engine.js` < 600 lines threshold strictly maintained at 586 lines, zero Cyrillic in source files).
+
 ## 0.2.29
 
 ### Fixed & Hardened (Critical Security: Verification Environment & Direct Execution Gate #176)
