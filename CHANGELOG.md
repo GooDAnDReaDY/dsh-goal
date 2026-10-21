@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.29
+
+### Fixed & Hardened (Critical Security: Verification Environment & Direct Execution Gate #176)
+- **Environment Variable Sanitization (`sanitizeVerificationEnv`) (#176)**: Child processes spawned by milestone acceptance verification commands now execute with an isolated, stripped environment. Host credentials, API keys, private tokens, passwords, and sensitive platform secrets (`*_KEY`, `*_TOKEN`, `*_SECRET`, `*_PASSWORD`, `*_AUTH`, `*_PRIVATE`, `GITEA_*`, `DEEPSEEK_*`, `OPENAI_*`) are completely scrubbed; only a strict minimal allowlist (`PATH`, `HOME`, `LANG`, `LC_*`, `TMPDIR`, `TERM`, `NODE_ENV`) is preserved.
+- **Direct Binary Execution Boundary (`parseCommandArgv` + `shell: false`) (#176)**: Replaced `shell: true` child execution with direct execve spawning (`shell: false`). Command strings are parsed into executable binaries and argument arrays respecting quotes, entirely eliminating shell metacharacter expansion and subshell injection.
+- **Strict Command Chaining & Binary Blacklist Validation (`validateVerificationCommand`) (#176)**: Rejected shell chaining and substitution operators (`;`, `&&`, `||`, `|`, `` ` ``, `$()`). Blacklisted destructive and exfiltration utilities (`curl`, `wget`, `nc`, `rm`, `mkfs`, `sudo`, `bash`, `sh`, `python*`, etc.). Validated at definition time (`goal_milestones`, `goal_set_milestones`, `goal_update_progress`) and execution time.
+- **Operator Approval Seam Integration (#176)**: Integrated with `approvalGate` / `checkApproval` seam, denying or gating verification commands that require human operator confirmation before execution.
+- **Comprehensive Unit & Security Test Suites (#176)**: Added 4 extensive test suites in `test/acceptance-gate.test.mjs` verifying secret scrubbing, chaining operator rejection, approval seam integration, and tool validation. Maintained 159 passing tests with 0 failures and preserved `lib/goal-engine.js < 600` line threshold.
+
 ## 0.2.28
 
 ### Added (Acceptance Gate / Critic Verification #163)
