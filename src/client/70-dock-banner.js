@@ -11,6 +11,7 @@
       const [isModalOpen, setIsModalOpen] = useState(false);
 
       const [isQuickLaunchOpen, setIsQuickLaunchOpen] = useState(false);
+      const [operatorAnswerInput, setOperatorAnswerInput] = useState('');
 
       const [isDockCollapsed, setIsDockCollapsed] = useState(() => {
         try {
@@ -535,6 +536,7 @@
       const isCompleted = state.state === 'COMPLETED';
 
       const isPlanMode = state.mode === 'plan' || state.state === 'PLANNING';
+      const isWaitingOperator = Boolean(state.waitingForOperator && state.operatorQuery);
 
       const formatElapsed = (totalSeconds) => {
         const s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
@@ -590,8 +592,8 @@
                 ),
                 React.createElement(
                   'span',
-                  { className: `dsh-goal-badge ${isCompleted ? 'dsh-goal-badge-ok' : isPlanMode ? 'dsh-goal-badge-plan' : isPaused ? 'dsh-goal-badge-warn' : ''}` },
-                  isCompleted ? (t('goalCompleted') || 'Done') : isPlanMode ? (t('planMode') || 'Plan Mode') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Goal')
+                  { className: `dsh-goal-badge ${isCompleted ? 'dsh-goal-badge-ok' : isWaitingOperator ? 'dsh-goal-badge-warn' : isPlanMode ? 'dsh-goal-badge-plan' : isPaused ? 'dsh-goal-badge-warn' : ''}` },
+                  isCompleted ? (t('goalCompleted') || 'Done') : isWaitingOperator ? ('❓ ' + (t('operatorInputRequired') || 'Input Needed')) : isPlanMode ? (t('planMode') || 'Plan Mode') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Goal')
                 ),
                 React.createElement('span', { className: 'dsh-goal-title', title: state.title }, state.title),
                 React.createElement('span', { className: 'dsh-goal-time' }, `⏱ ${liveElapsedStr}`),
@@ -799,6 +801,112 @@
 
             ),
 
+            isWaitingOperator
+              ? React.createElement(
+                  'div',
+                  {
+                    className: 'dsh-goal-operator-card',
+                    style: {
+                      background: 'var(--dsw-alias-bg-sunken)',
+                      border: '1px solid var(--dsw-alias-state-warning-primary)',
+                      borderRadius: 6,
+                      padding: '10px 12px',
+                      marginTop: 8,
+                    },
+                  },
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: 'var(--dsw-alias-state-warning-primary)',
+                        marginBottom: 4,
+                      },
+                    },
+                    React.createElement('span', null, '❓'),
+                    React.createElement('span', null, t('operatorInputRequired') || 'Operator Input Required')
+                  ),
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--dsw-alias-label-primary)',
+                        marginBottom: 8,
+                        wordBreak: 'break-word',
+                      },
+                    },
+                    state.operatorQuery.question
+                  ),
+                  Array.isArray(state.operatorQuery.options) && state.operatorQuery.options.length > 0
+                    ? React.createElement(
+                        'div',
+                        {
+                          className: 'dsh-goal-operator-options',
+                          style: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+                        },
+                        state.operatorQuery.options.map((opt, idx) =>
+                          React.createElement(
+                            'button',
+                            {
+                              key: idx,
+                              type: 'button',
+                              className: 'dsh-goal-btn',
+                              style: {
+                                fontSize: 12,
+                                padding: '4px 10px',
+                                borderColor: 'var(--dsw-alias-brand-primary)',
+                                color: 'var(--dsw-alias-brand-primary)',
+                              },
+                              onClick: () => handleAction('answer_operator', { answer: opt, optionIndex: idx }),
+                            },
+                            opt
+                          )
+                        )
+                      )
+                    : null,
+                  React.createElement(
+                    'div',
+                    { style: { display: 'flex', gap: 6, alignItems: 'center' } },
+                    React.createElement('input', {
+                      type: 'text',
+                      className: 'dsh-goal-card-input',
+                      style: { flex: 1, fontSize: 12, padding: '4px 8px' },
+                      placeholder: t('answerPlaceholder') || 'Type your answer or select an option above...',
+                      value: operatorAnswerInput,
+                      onChange: (e) => setOperatorAnswerInput(e.target.value),
+                      onKeyDown: (e) => {
+                        if (e.key === 'Enter' && operatorAnswerInput.trim()) {
+                          e.preventDefault();
+                          handleAction('answer_operator', { answer: operatorAnswerInput.trim() });
+                          setOperatorAnswerInput('');
+                        }
+                      },
+                    }),
+                    React.createElement(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'dsh-goal-btn dsh-goal-btn-primary',
+                        style: { fontSize: 12, padding: '4px 12px', whiteSpace: 'nowrap' },
+                        disabled: !operatorAnswerInput.trim(),
+                        onClick: () => {
+                          if (operatorAnswerInput.trim()) {
+                            handleAction('answer_operator', { answer: operatorAnswerInput.trim() });
+                            setOperatorAnswerInput('');
+                          }
+                        },
+                      },
+                      t('submitAnswer') || 'Submit'
+                    )
+                  )
+                )
+              : null
           ),
 
         ),

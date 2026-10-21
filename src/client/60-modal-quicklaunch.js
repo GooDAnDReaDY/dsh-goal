@@ -4,6 +4,8 @@
 
       const [title, setTitle] = useState('');
       const [launchMode, setLaunchMode] = useState('act');
+      const [activeQuickTpl, setActiveQuickTpl] = useState(null);
+      const [quickTplVars, setQuickTplVars] = useState({});
       const [showTemplates, setShowTemplates] = useState(false);
       const [backendTemplates, setBackendTemplates] = useState([]);
       const [selectedTpl, setSelectedTpl] = useState(null);
@@ -193,16 +195,27 @@
 
                       type: 'button',
 
-                      className: 'dsh-goal-template-chip',
+                      className: `dsh-goal-template-chip ${activeQuickTpl?.id === tmpl.id ? 'active' : ''}`,
+                      style: activeQuickTpl?.id === tmpl.id ? { borderColor: 'var(--dsw-alias-brand-primary)', fontWeight: 600 } : {},
 
                       title: prefix,
 
                       onClick: () => {
-
-                        setTitle(prefix);
-
+                        const isSelected = activeQuickTpl?.id === tmpl.id;
+                        if (isSelected) {
+                          setActiveQuickTpl(null);
+                          setQuickTplVars({});
+                        } else {
+                          setActiveQuickTpl(tmpl);
+                          const initial = {};
+                          (tmpl.variables || []).forEach((v) => { initial[v.id] = ""; });
+                          setQuickTplVars(initial);
+                          const generated = typeof formatQuickLaunchPrompt === "function"
+                            ? formatQuickLaunchPrompt(tmpl, initial, lang)
+                            : prefix;
+                          setTitle(generated || prefix);
+                        }
                         if (inputRef.current) inputRef.current.focus();
-
                       },
 
                     },
@@ -214,6 +227,75 @@
                 }),
 
               ),
+
+              activeQuickTpl?.variables && activeQuickTpl.variables.length > 0
+                ? React.createElement(
+                    'div',
+                    {
+                      className: 'dsh-goal-tpl-vars-box',
+                      style: {
+                        background: 'var(--dsw-alias-bg-sunken)',
+                        border: '1px solid var(--dsw-alias-border-l1)',
+                        borderRadius: 6,
+                        padding: '8px 10px',
+                        marginBottom: 10,
+                      },
+                    },
+                    React.createElement(
+                      'div',
+                      {
+                        style: {
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: 'var(--dsw-alias-label-secondary)',
+                          marginBottom: 6,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        },
+                      },
+                      React.createElement('span', null, `${activeQuickTpl.icon} ${activeQuickTpl.label[lang] || activeQuickTpl.label.en} ${t('quickTplVariablesTitle') || 'Parameters:'}`),
+                      React.createElement(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'dsh-goal-btn icon-only',
+                          style: { fontSize: 10, padding: '2px 4px', height: 'auto' },
+                          onClick: () => { setActiveQuickTpl(null); setQuickTplVars({}); },
+                        },
+                        '✕'
+                      )
+                    ),
+                    activeQuickTpl.variables.map((v) => {
+                      const vLabel = v.label ? (v.label[lang] || v.label.en) : v.id;
+                      return React.createElement(
+                        'div',
+                        { key: v.id, style: { marginBottom: 6 } },
+                        React.createElement(
+                          'label',
+                          { style: { fontSize: 11, display: 'block', color: 'var(--dsw-alias-label-primary)', marginBottom: 2 } },
+                          vLabel,
+                          v.required ? React.createElement('span', { style: { color: 'var(--dsw-alias-state-danger-primary)', marginLeft: 3 } }, '*') : null
+                        ),
+                        React.createElement('input', {
+                          type: 'text',
+                          className: 'dsh-goal-card-input',
+                          style: { width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '4px 8px' },
+                          placeholder: v.placeholder || '',
+                          value: quickTplVars[v.id] || '',
+                          onChange: (e) => {
+                            const updated = { ...quickTplVars, [v.id]: e.target.value };
+                            setQuickTplVars(updated);
+                            const generated = typeof formatQuickLaunchPrompt === 'function'
+                              ? formatQuickLaunchPrompt(activeQuickTpl, updated, lang)
+                              : activeQuickTpl.prefix[lang] || activeQuickTpl.prefix.en;
+                            setTitle(generated);
+                          },
+                        })
+                      );
+                    })
+                  )
+                : null,
 
               React.createElement('input', {
 

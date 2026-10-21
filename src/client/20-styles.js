@@ -1259,6 +1259,28 @@
         gap: 3px;
       }
 
+      .dsh-goal-template-chip.active {
+        border-color: var(--dsw-alias-brand-primary);
+        font-weight: 600;
+        background: var(--dsw-alias-bg-layer-3);
+      }
+
+      .dsh-goal-operator-card {
+        background: var(--dsw-alias-bg-sunken);
+        border: 1px solid var(--dsw-alias-state-warning-primary);
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin-top: 8px;
+      }
+
+      .dsh-goal-tpl-vars-box {
+        background: var(--dsw-alias-bg-sunken);
+        border: 1px solid var(--dsw-alias-border-l1);
+        border-radius: 6px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+      }
+
       .dsh-goal-gate-error {
         font-size: 11px;
         color: var(--dsw-alias-state-danger-primary);
