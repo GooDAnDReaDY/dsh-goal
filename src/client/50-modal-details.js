@@ -26,6 +26,146 @@
       const [interveneText, setInterveneText] = useState('');
 
       const [interveneSent, setInterveneSent] = useState(false);
+      const [activeTab, setActiveTab] = useState("overview");
+      const [diffData, setDiffData] = useState(null);
+      const [diffLoading, setDiffLoading] = useState(false);
+      const [diffError, setDiffError] = useState(null);
+      const [selectedFile, setSelectedFile] = useState(null);
+
+      const fetchDiff = useCallback(() => {
+        setDiffLoading(true);
+        setDiffError(null);
+        const sid = state.sessionId || "default";
+        const url = "/dsh-goal/diff?sessionId=" + encodeURIComponent(sid);
+        if (typeof fetch === "function") {
+          fetch(url)
+            .then((res) => {
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              return res.json();
+            })
+            .then((data) => {
+              if (data && data.ok) {
+                setDiffData(data);
+              } else {
+                setDiffError((data && data.error) || "Failed to load diff");
+              }
+            })
+            .catch((err) => {
+              setDiffError(err.message || "Network error");
+            })
+            .finally(() => {
+              setDiffLoading(false);
+            });
+        } else {
+          setDiffLoading(false);
+        }
+      }, [state.sessionId]);
+
+      useEffect(() => {
+        if (activeTab === "diff") {
+          fetchDiff();
+        }
+      }, [activeTab, fetchDiff]);
+
+      const renderDiffBox = () => {
+        return React.createElement(
+          "div",
+          { className: "dsh-goal-diff-box" },
+          React.createElement(
+            "div",
+            { className: "dsh-goal-diff-summary" },
+            React.createElement(
+              "div",
+              { style: { display: "flex", alignItems: "center", gap: 8 } },
+              React.createElement("span", null, (t("diffBaseCommit") || "Base:") + " ", React.createElement("code", null, (diffData && diffData.base ? diffData.base : (state.gitStartCommit || "main")).slice(0, 7))),
+              React.createElement("span", null, "→"),
+              React.createElement("span", null, (t("diffTargetBranch") || "Target:") + " ", React.createElement("code", null, (diffData && diffData.target) || state.gitBranch || state.branchName || "HEAD"))
+            ),
+            React.createElement(
+              "div",
+              { style: { display: "flex", alignItems: "center", gap: 8 } },
+              diffData && diffData.stats ? React.createElement(
+                "span",
+                { className: "dsh-goal-diff-stat-pill" },
+                React.createElement("span", { className: "dsh-goal-diff-ins" }, "+" + diffData.stats.insertions),
+                React.createElement("span", { className: "dsh-goal-diff-del" }, "-" + diffData.stats.deletions)
+              ) : null,
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "dsh-goal-btn icon-only",
+                  style: { padding: "2px 8px", fontSize: 11 },
+                  onClick: fetchDiff,
+                  title: t("diffRefresh") || "Refresh Diff",
+                },
+                "🔄"
+              )
+            )
+          ),
+          diffData && diffData.files && diffData.files.length > 0 ? React.createElement(
+            "div",
+            { className: "dsh-goal-diff-files-list" },
+            React.createElement(
+              "span",
+              {
+                className: `dsh-goal-diff-file-chip${selectedFile === null ? " active" : ""}`,
+                onClick: () => setSelectedFile(null),
+              },
+              (t("allFiles") || "All Files") + ` (${diffData.files.length})`
+            ),
+            diffData.files.map((f) => React.createElement(
+              "span",
+              {
+                key: f.path,
+                className: `dsh-goal-diff-file-chip${selectedFile === f.path ? " active" : ""}`,
+                onClick: () => setSelectedFile(selectedFile === f.path ? null : f.path),
+                title: `${f.path} (+${f.insertions} / -${f.deletions})`,
+              },
+              `${f.path.split("/").pop()} `,
+              React.createElement("span", { className: "dsh-goal-diff-ins" }, "+" + f.insertions),
+              "/",
+              React.createElement("span", { className: "dsh-goal-diff-del" }, "-" + f.deletions)
+            ))
+          ) : null,
+          diffLoading ? React.createElement("div", { className: "dsh-goal-diff-empty" }, t("diffLoading") || "Loading diff...")
+            : diffError ? React.createElement("div", { className: "dsh-goal-diff-empty dsh-goal-gate-error" }, "Error: " + diffError)
+            : !diffData || !diffData.diff || diffData.diff.trim().length === 0 ? React.createElement("div", { className: "dsh-goal-diff-empty" }, t("diffNoChanges") || "No git changes detected relative to base commit.")
+            : React.createElement(
+                "div",
+                { className: "dsh-goal-diff-viewer" },
+                (() => {
+                  const allLines = diffData.diff.split("\n");
+                  let linesToShow = allLines;
+                  if (selectedFile) {
+                    const fileChunks = [];
+                    let collecting = false;
+                    for (const l of allLines) {
+                      if (l.startsWith("diff --git ")) {
+                        const bPart = l.split(" b/")[1] || "";
+                        collecting = bPart === selectedFile;
+                      }
+                      if (collecting) fileChunks.push(l);
+                    }
+                    if (fileChunks.length > 0) linesToShow = fileChunks;
+                  }
+                  return linesToShow.map((line, idx) => {
+                    let lineClass = "dsh-goal-diff-line";
+                    if (line.startsWith("+") && !line.startsWith("+++")) {
+                      lineClass += " dsh-goal-diff-line-add";
+                    } else if (line.startsWith("-") && !line.startsWith("---")) {
+                      lineClass += " dsh-goal-diff-line-del";
+                    } else if (line.startsWith("@@")) {
+                      lineClass += " dsh-goal-diff-line-hunk";
+                    } else if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("---") || line.startsWith("+++")) {
+                      lineClass += " dsh-goal-diff-line-header";
+                    }
+                    return React.createElement("span", { key: idx, className: lineClass }, line || " ");
+                  });
+                })()
+              )
+        );
+      };
 
       const totalTokens = state.tokensUsage?.totalTokens || 0;
 
@@ -145,7 +285,35 @@
 
             ),
 
-            isPlanMode && !isCompleted
+            React.createElement(
+              'div',
+              { className: 'dsh-goal-tabs' },
+              React.createElement(
+                'button',
+                {
+                  type: 'button',
+                  className: `dsh-goal-tab-btn${activeTab === "overview" ? " active" : ""}`,
+                  onClick: () => setActiveTab("overview"),
+                },
+                "📋 " + (t("tabOverview") || "Plan & Overview")
+              ),
+              React.createElement(
+                'button',
+                {
+                  type: 'button',
+                  className: `dsh-goal-tab-btn${activeTab === "diff" ? " active" : ""}`,
+                  onClick: () => setActiveTab("diff"),
+                },
+                "🔍 " + (t("tabDiff") || "Changes / Diff") + (diffData && diffData.stats && diffData.stats.filesChanged ? ` (${diffData.stats.filesChanged})` : "")
+              )
+            ),
+
+            activeTab === 'diff'
+              ? renderDiffBox()
+              : React.createElement(
+                  React.Fragment,
+                  null,
+                  isPlanMode && !isCompleted
               ? React.createElement(
                   'div',
                   { className: 'dsh-goal-plan-banner' },
@@ -639,7 +807,8 @@
                     )
                   )
                 )
-              : null,
+              : null
+                ),
 
           ),
 
