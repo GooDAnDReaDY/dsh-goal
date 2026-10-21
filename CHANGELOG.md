@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.31
+
+### Added (Snapshot Diff Visualizer in UI & 2-Way Kanban Sync #168, #164)
+- **Interactive Snapshot Diff Visualizer in UI (#168)**: Added `GET /dsh-goal/diff` endpoint with structured git patch breakdown (`stats`, `files`, `diff`, `truncated`). Secured with ref validation (`isValidGitRef`) and directory confinement (`getSafeCwd`).
+- **Interactive Changes / Diff Tab in `GoalDetailsModal` (#168)**: Added dedicated tab bar `[📋 Plan & Overview]` and `[🔍 Changes / Diff]`, diff summary header with base-to-target branch indicators, additions/deletions counters, per-file filter chips, and highlighted diff viewer with DSH design tokens.
+- **Bidirectional Kanban Sync with `@goodandready/dsh-kanban` (#164)**: Integrated goal milestones with Kanban board tasks via `lib/engine-kanban-sync.js`. Mapped statuses: `pending` ⇄ `todo`, `in_progress` ⇄ `in_progress`, `completed` ⇄ `done`.
+- **Reactive & Inbound Synchronization (#164)**: Milestone updates in `GoalEngine` automatically update kanban card columns. Inbound movements on the Kanban board (`POST /dsh-goal/action` with `action: kanban_move`) update goal milestones in real-time.
+- **Graceful Safe Degradation (#164)**: Continues smooth standalone operation when `dsh-kanban` is not installed.
+- **Comprehensive Unit & Integration Test Suites (#168, #164)**: Added `test/snapshot-diff.test.mjs` and `test/kanban-sync.test.mjs` (180 tests passing, 0 failures, `lib/goal-engine.js` < 600 line threshold strictly maintained at 594 lines, zero Cyrillic in source files).
+
 ## 0.2.30
 
 ### Added (Interactive HITL Operator Tool & Parameterized Quick Launch Templates #165, #166)
