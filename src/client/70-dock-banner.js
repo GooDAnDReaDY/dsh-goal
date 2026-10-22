@@ -674,7 +674,28 @@
 
               ),
 
-              React.createElement('span', { className: 'dsh-goal-title', title: state.title }, state.title),
+              state.isSubGoal
+                ? React.createElement(
+                    'span',
+                    { className: 'dsh-goal-badge dsh-goal-badge-subgoal', title: t('subGoalBadge') || 'Sub-goal' },
+                    '🌱 ' + (t('subGoalBadge') || 'Sub-goal')
+                  )
+                : null,
+
+              state.breadcrumbs && state.breadcrumbs.length > 1
+                ? React.createElement(
+                    'span',
+                    { className: 'dsh-goal-breadcrumbs', title: state.title },
+                    state.breadcrumbs.map((crumb, idx) =>
+                      React.createElement(
+                        'span',
+                        { key: crumb.sessionId || idx, className: 'dsh-goal-breadcrumb-item' + (crumb.isCurrent ? ' active' : '') },
+                        idx > 0 && React.createElement('span', { className: 'dsh-goal-crumb-sep' }, ' / '),
+                        crumb.title
+                      )
+                    )
+                  )
+                : React.createElement('span', { className: 'dsh-goal-title', title: state.title }, state.title),
 
             ),
 
@@ -683,6 +704,19 @@
               'div',
 
               { className: 'dsh-goal-right' },
+
+              state.subGoals && state.subGoals.length > 0
+                ? React.createElement(
+                    'span',
+                    {
+                      className: 'dsh-goal-stat-pill',
+                      style: { cursor: 'pointer' },
+                      title: t('subGoalsTitle') || 'Sub-goals',
+                      onClick: () => setIsModalOpen(true),
+                    },
+                    '🌿 ' + state.subGoals.filter((s) => s.state === 'COMPLETED').length + '/' + state.subGoals.length + ' ' + (t('subGoalsPill') || 'sub-goals')
+                  )
+                : null,
 
               React.createElement(
 

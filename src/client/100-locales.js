@@ -167,6 +167,14 @@
         allFiles: 'All Files',
         planModeDesc: 'Plan first, review milestones, then execute',
         actModeDesc: 'Direct execution right away',
+        tabSubGoals: 'Sub-goals',
+        subGoalsTitle: 'Hierarchical Sub-goals',
+        subGoalBadge: 'Sub-goal',
+        subGoalsPill: 'sub-goals',
+        noSubGoals: 'No sub-goals spawned yet. Model can spawn sub-goals via goal_spawn_subgoal tool.',
+        parentGoalBanner: 'Child Sub-goal of:',
+        compactedBadge: 'Compacted',
+        compactionTooltip: 'History compacted to reduce context footprint',
 
       },
 
@@ -329,6 +337,14 @@
         allFiles: '所有文件',
         planModeDesc: '先制定里程碑方案，人工确认后再执行',
         actModeDesc: '立即开始编码与任务执行',
+        tabSubGoals: '子目标',
+        subGoalsTitle: '分层子目标管理',
+        subGoalBadge: '子目标',
+        subGoalsPill: '个子目标',
+        noSubGoals: '当前任务暂无衍生子目标。模型可通过 goal_spawn_subgoal 工具动态创建独立子目标。',
+        parentGoalBanner: '衍生自主目标:',
+        compactedBadge: '已压缩',
+        compactionTooltip: '阶段历史已自动精简压缩以优化上下文窗口',
 
       },
 
