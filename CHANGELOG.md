@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.32] - 2026-10-22
+
+### Added
+- **Milestone Context Compaction (#167)**:
+  - Added dedicated domain module `lib/engine-compaction.js` with structured milestone summarization.
+  - Automatically generates high-density summaries for completed milestones (outcomes, notes, subtask completion metrics, verification gates).
+  - Separates active prompt injection into a condensed `[COMPACTED MILESTONES HISTORY]` block, cutting LLM context token overhead by >40% on multi-milestone goals.
+  - Preserves stable original milestone numbering in active work plan.
+  - Added visual `⚡ Compacted` badge in `GoalDetailsModal` with hover summary.
+- **Hierarchical Recursive Sub-goals (#170)**:
+  - Added dedicated domain module `lib/engine-subgoals.js` supporting nested sub-goal execution trees.
+  - Registered model tool `goal_spawn_subgoal` with dedicated iteration budget and optional context inheritance.
+  - Strictly isolated execution counters (iterations, stalls, tool failure circuit breakers, and token budgets).
+  - Clean lifecycle synchronization: upon child completion, deliverables, artifacts, and execution logs return to the parent goal.
+  - Added multi-level breadcrumbs navigation `Parent / Sub-goal` and `🌱 Sub-goal` badge in `GoalTopBanner`.
+  - Added interactive `🌳 Sub-goals` tab in `GoalDetailsModal`.
+- **Unit Test Suites**:
+  - `test/milestone-compaction.test.mjs` (compaction generation, prompt injection, and >40% context savings verification).
+  - `test/recursive-subgoals.test.mjs` (lifecycle, isolation of counters, deliverables sync, tool execution, and breadcrumbs).
+
+
 ## 0.2.31
 
 ### Added (Snapshot Diff Visualizer in UI & 2-Way Kanban Sync #168, #164)
