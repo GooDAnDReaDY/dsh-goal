@@ -26,6 +26,9 @@
       const [interveneText, setInterveneText] = useState('');
 
       const [interveneSent, setInterveneSent] = useState(false);
+      const [copiedNotes, setCopiedNotes] = useState(false);
+      const [notifiedTelegram, setNotifiedTelegram] = useState(false);
+      const [dispatchingTelegram, setDispatchingTelegram] = useState(false);
       const [activeTab, setActiveTab] = useState("overview");
       const [diffData, setDiffData] = useState(null);
       const [diffLoading, setDiffLoading] = useState(false);
@@ -231,6 +234,45 @@
         ? `Prompt: ${promptTokens.toLocaleString('en-US')} | Completion: ${compTokens.toLocaleString('en-US')} | Total: ${totalTokens.toLocaleString('en-US')}`
 
         : 'Tokens not recorded yet';
+
+      const handleCopyReleaseNotes = async () => {
+        try {
+          const res = await fetch('/dsh-goal/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'export_release_notes', sessionId: state.sessionId }),
+          });
+          const json = await res.json();
+          const notesText = json?.releaseNotes || '';
+          if (notesText && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(notesText);
+            setCopiedNotes(true);
+            setTimeout(() => setCopiedNotes(false), 2500);
+          }
+        } catch (e) {
+          console.warn('[dsh-goal] Failed to export release notes:', e);
+        }
+      };
+
+      const handleSendTelegram = async () => {
+        setDispatchingTelegram(true);
+        try {
+          const res = await fetch('/dsh-goal/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'notify_telegram', sessionId: state.sessionId }),
+          });
+          const json = await res.json();
+          if (json?.ok) {
+            setNotifiedTelegram(true);
+            setTimeout(() => setNotifiedTelegram(false), 3000);
+          }
+        } catch (e) {
+          console.warn('[dsh-goal] Failed to notify telegram:', e);
+        } finally {
+          setDispatchingTelegram(false);
+        }
+      };
 
       const handleCopyReport = () => {
 
@@ -627,6 +669,21 @@
 
                 'div',
 
+                {
+                  className: 'dsh-goal-stat-box',
+                  title: 'Cost: ' + (state.costUsage?.formattedCost || '.00') + (state.maxCostBudget ? ' / $' + state.maxCostBudget.toFixed(2) : ''),
+                },
+
+                React.createElement('span', { className: 'dsh-goal-stat-val' }, state.costUsage?.formattedCost || '.00'),
+
+                React.createElement('span', { className: 'dsh-goal-stat-lbl' }, t('cost') || 'Cost'),
+
+              ),
+
+              React.createElement(
+
+                'div',
+
                 { className: 'dsh-goal-stat-box' },
 
                 React.createElement('span', { className: 'dsh-goal-stat-val' }, `${state.iterationsCount || 0}/${state.maxIterations || 25}`),
@@ -906,6 +963,44 @@
                     },
 
                     copied ? (t('reportCopied') || '✅ Copied!') : (t('copyReport') || '📋 Copy Report in Markdown'),
+
+                  ),
+
+                  React.createElement(
+
+                    'button',
+
+                    {
+
+                      className: 'dsh-goal-btn dsh-goal-btn-copy' + (copiedNotes ? ' copied' : ''),
+
+                      onClick: handleCopyReleaseNotes,
+
+                      title: t('copyReleaseNotes') || 'Copy Conventional Release Notes',
+
+                    },
+
+                    copiedNotes ? (t('releaseNotesCopied') || '✅ Release Notes Copied!') : (t('copyReleaseNotes') || '📝 Release Notes'),
+
+                  ),
+
+                  React.createElement(
+
+                    'button',
+
+                    {
+
+                      className: 'dsh-goal-btn dsh-goal-btn-copy' + (notifiedTelegram ? ' copied' : ''),
+
+                      disabled: dispatchingTelegram,
+
+                      onClick: handleSendTelegram,
+
+                      title: t('notifyTelegram') || 'Send Digest to Telegram',
+
+                    },
+
+                    notifiedTelegram ? (t('telegramNotified') || '✅ Sent to Telegram!') : (t('notifyTelegram') || '✈️ Telegram'),
 
                   ),
 

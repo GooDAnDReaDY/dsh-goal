@@ -1483,4 +1483,14 @@
         border: 1px solid var(--dsw-alias-border);
         margin-left: 6px;
       }
+      .dsh-goal-stat-cost {
+        background: var(--dsw-alias-bg-layer-2, var(--dsw-alias-bg-hover));
+        color: var(--dsw-alias-state-warning-primary, var(--dsw-alias-text-secondary));
+        border: 1px solid var(--dsw-alias-border);
+      }
+      .dsh-goal-badge-cost-limit {
+        background: var(--dsw-alias-status-danger, var(--dsw-alias-status-warning));
+        color: var(--dsw-alias-surface-raised, var(--dsw-alias-text-inverse));
+        font-weight: 600;
+      }
     `;

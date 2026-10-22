@@ -175,6 +175,14 @@
         parentGoalBanner: 'Child Sub-goal of:',
         compactedBadge: 'Compacted',
         compactionTooltip: 'History compacted to reduce context footprint',
+        cost: 'Cost',
+        costUsage: 'Financial Cost',
+        costLimitReached: 'Cost Budget Exceeded',
+        costBudgetLabel: 'Financial Budget Limit ($):',
+        copyReleaseNotes: '📝 Copy Release Notes',
+        releaseNotesCopied: '✅ Release Notes Copied!',
+        notifyTelegram: '✈️ Send to Telegram',
+        telegramNotified: '✅ Sent to Telegram!',
 
       },
 
@@ -345,6 +353,14 @@
         parentGoalBanner: '衍生自主目标:',
         compactedBadge: '已压缩',
         compactionTooltip: '阶段历史已自动精简压缩以优化上下文窗口',
+        cost: '成本',
+        costUsage: '财务消耗',
+        costLimitReached: '财务预算超限',
+        costBudgetLabel: '最高财务预算限制 ($):',
+        copyReleaseNotes: '📝 复制发布简报',
+        releaseNotesCopied: '✅ 发布简报已复制！',
+        notifyTelegram: '✈️ 发送至 Telegram',
+        telegramNotified: '✅ 已推送到 Telegram！',
 
       },
 

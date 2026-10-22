@@ -568,6 +568,7 @@
       const etaStr = state?.formattedETA ? ` (ETA ${state.formattedETA})` : '';
 
       const isBudgetExceeded = state?.state === 'PAUSED' && state?.logs?.some((l) => l.message?.includes('Token budget reached'));
+      const isCostExceeded = Boolean(state?.costLimitExceeded);
 
       return React.createElement(
 
@@ -596,6 +597,7 @@
                   isCompleted ? (t('goalCompleted') || 'Done') : isWaitingOperator ? ('❓ ' + (t('operatorInputRequired') || 'Input Needed')) : isPlanMode ? (t('planMode') || 'Plan Mode') : isPaused ? (t('paused') || 'Paused') : (t('goalLabel') || 'Goal')
                 ),
                 React.createElement('span', { className: 'dsh-goal-title', title: state.title }, state.title),
+                state.costUsage && state.costUsage.totalCost > 0 ? React.createElement('span', { className: 'dsh-goal-time dsh-goal-stat-cost', title: (t('costUsage') || 'Cost') + ': ' + state.costUsage.formattedCost }, '💰 ' + state.costUsage.formattedCost) : null,
                 React.createElement('span', { className: 'dsh-goal-time' }, `⏱ ${liveElapsedStr}`),
                 isPlanMode && !isCompleted ? React.createElement(
                   'button',
@@ -718,6 +720,19 @@
                   )
                 : null,
 
+              state.costUsage && state.costUsage.totalCost > 0
+                ? React.createElement(
+                    'span',
+                    {
+                      className: 'dsh-goal-stat-pill dsh-goal-stat-cost',
+                      style: { cursor: 'pointer' },
+                      title: (t('costUsage') || 'Cost') + ': ' + state.costUsage.formattedCost + (state.maxCostBudget ? ' / ' + state.costUsage.currency + ' ' + state.maxCostBudget.toFixed(2) : ''),
+                      onClick: () => setIsModalOpen(true),
+                    },
+                    '💰 ' + state.costUsage.formattedCost
+                  )
+                : null,
+
               React.createElement(
 
                 'span',
@@ -762,6 +777,16 @@
 
                 : null,
 
+              isCostExceeded
+                ? React.createElement(
+                    'span',
+                    {
+                      className: 'dsh-goal-badge dsh-goal-badge-cost-limit',
+                      title: t('costLimitReached') || 'Cost Budget Exceeded',
+                    },
+                    '🚨 ' + (t('costLimitReached') || 'Cost Limit')
+                  )
+                : null,
               isBudgetExceeded
                 ? React.createElement(
                     'button',
