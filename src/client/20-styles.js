@@ -1412,4 +1412,75 @@
         color: var(--dsw-alias-label-secondary);
         font-size: 13px;
       }
+      /* Sub-goals and Compaction (Issue 167 and Issue 170) */
+      .dsh-goal-badge-subgoal {
+        background: var(--dsw-alias-brand-bg, var(--dsw-alias-bg-hover));
+        color: var(--dsw-alias-brand-primary, var(--dsw-alias-text-primary));
+        border: 1px solid var(--dsw-alias-brand-border, var(--dsw-alias-border));
+      }
+      .dsh-goal-breadcrumbs {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: var(--dsw-alias-label-secondary);
+      }
+      .dsh-goal-breadcrumb-item {
+        color: var(--dsw-alias-label-secondary);
+      }
+      .dsh-goal-breadcrumb-item.active {
+        color: var(--dsw-alias-text-primary);
+        font-weight: 600;
+      }
+      .dsh-goal-crumb-sep {
+        color: var(--dsw-alias-label-tertiary);
+        margin: 0 2px;
+      }
+      .dsh-goal-subgoals-box {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 0;
+      }
+      .dsh-goal-subgoals-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .dsh-goal-subgoal-card {
+        background: var(--dsw-alias-bg-layer-2, var(--dsw-alias-bg-hover));
+        border: 1px solid var(--dsw-alias-border);
+        border-radius: 6px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .dsh-goal-subgoal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .dsh-goal-subgoal-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--dsw-alias-text-primary);
+      }
+      .dsh-goal-subgoal-summary {
+        font-size: 12px;
+        color: var(--dsw-alias-label-secondary);
+      }
+      .dsh-goal-compacted-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: var(--dsw-alias-bg-layer-2, var(--dsw-alias-bg-hover));
+        color: var(--dsw-alias-state-success-primary, var(--dsw-alias-text-secondary));
+        border: 1px solid var(--dsw-alias-border);
+        margin-left: 6px;
+      }
     `;

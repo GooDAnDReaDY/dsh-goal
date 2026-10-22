@@ -167,6 +167,53 @@
         );
       };
 
+      const renderSubGoalsBox = () => {
+        const subList = Array.isArray(state.subGoals) ? state.subGoals : [];
+        return React.createElement(
+          'div',
+          { className: 'dsh-goal-subgoals-box' },
+          state.isSubGoal
+            ? React.createElement(
+                'div',
+                { className: 'dsh-goal-subgoal-card', style: { borderStyle: 'dashed' } },
+                React.createElement('div', { style: { fontSize: 11, color: 'var(--dsw-alias-brand-primary)', fontWeight: 600 } }, '🌱 ' + (t('parentGoalBanner') || 'Child Sub-goal of:')),
+                React.createElement('div', { style: { fontSize: 12, color: 'var(--dsw-alias-label-secondary)' } }, state.parentGoalId || 'Parent Goal')
+              )
+            : null,
+          subList.length === 0
+            ? React.createElement('div', { className: 'dsh-goal-diff-empty' }, t('noSubGoals') || 'No sub-goals spawned yet.')
+            : React.createElement(
+                'div',
+                { className: 'dsh-goal-subgoals-list' },
+                subList.map((sub, idx) =>
+                  React.createElement(
+                    'div',
+                    { key: sub.id || sub.subGoalId || idx, className: 'dsh-goal-subgoal-card' },
+                    React.createElement(
+                      'div',
+                      { className: 'dsh-goal-subgoal-header' },
+                      React.createElement('span', { className: 'dsh-goal-subgoal-title' }, sub.title),
+                      React.createElement(
+                        'span',
+                        {
+                          className: 'dsh-goal-badge ' + (sub.state === 'COMPLETED' ? 'dsh-goal-badge-ok' : sub.state === 'RUNNING' ? 'dsh-goal-badge-plan' : ''),
+                        },
+                        sub.state || 'PENDING'
+                      )
+                    ),
+                    sub.resultSummary
+                      ? React.createElement(
+                          'div',
+                          { className: 'dsh-goal-subgoal-summary' },
+                          sub.resultSummary
+                        )
+                      : null
+                  )
+                )
+              )
+        );
+      };
+
       const totalTokens = state.tokensUsage?.totalTokens || 0;
 
       const promptTokens = state.tokensUsage?.promptTokens || 0;
@@ -305,11 +352,22 @@
                   onClick: () => setActiveTab("diff"),
                 },
                 "🔍 " + (t("tabDiff") || "Changes / Diff") + (diffData && diffData.stats && diffData.stats.filesChanged ? ` (${diffData.stats.filesChanged})` : "")
+              ),
+              React.createElement(
+                'button',
+                {
+                  type: 'button',
+                  className: `dsh-goal-tab-btn${activeTab === "subgoals" ? " active" : ""}`,
+                  onClick: () => setActiveTab("subgoals"),
+                },
+                "🌳 " + (t("tabSubGoals") || "Sub-goals") + (state.subGoals && state.subGoals.length > 0 ? ` (${state.subGoals.length})` : "")
               )
             ),
 
             activeTab === 'diff'
               ? renderDiffBox()
+              : activeTab === 'subgoals'
+              ? renderSubGoalsBox()
               : React.createElement(
                   React.Fragment,
                   null,
@@ -638,6 +696,13 @@
                           },
 
                           `${i + 1}. ${m.title}`,
+                          m.compactionSummary
+                            ? React.createElement(
+                                'span',
+                                { className: 'dsh-goal-compacted-pill', title: m.compactionSummary },
+                                '⚡ ' + (t('compactedBadge') || 'Compacted')
+                              )
+                            : null,
                           m.verificationCommand
                             ? React.createElement(
                                 'span',
