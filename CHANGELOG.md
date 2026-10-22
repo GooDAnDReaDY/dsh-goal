@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.33] - 2026-10-22
+
+### Added
+- **Real-Time Financial Cost Meter (#169)**:
+  - Added dedicated domain module `lib/engine-cost-meter.js` with comprehensive model rate catalog (`DEFAULT_MODEL_RATES`) and prefix resolution.
+  - Implemented `calculateCost`, `formatCurrency`, and per-turn monetary token accumulation (`updateGoalCostUsage`).
+  - Added configurable financial budget limits (`maxCostBudget`) and proactive warning thresholds (`costWarningThreshold`).
+  - Automated safety circuit breaker: soft-pauses goal execution when financial budget is exceeded, preventing unintended API spend.
+  - Added real-time cost stat pill (`💰 $X.XX`) and limit badge (`🚨 Cost Limit`) in client dock banner and modal summary metrics.
+  - Added warning injections in prompt (`lib/engine-prompt.js`).
+- **Standardized Release Notes & Telegram Gateway (#171)**:
+  - Added dedicated domain module `lib/engine-release-notes.js` with Conventional Changelog Markdown generation (`generateReleaseNotes`).
+  - Integrated asynchronous completion digest delivery via Cordis `messengerGateway` (`dispatchGoalTelegramNotification`).
+  - Added `export_release_notes` and `notify_telegram` REST actions to `POST /dsh-goal/action`.
+  - Added interactive 'Copy Release Notes' and 'Send to Telegram' buttons in modal details footer.
+- **Unit Test Suites**:
+  - `test/cost-meter.test.mjs` (rate resolution, exact pricing, currency formatting, budget warnings, safety pauses).
+  - `test/release-notes-notifications.test.mjs` (Markdown generation, delivery via mock gateway, safe degradation).
+
 ## [0.2.32] - 2026-10-22
 
 ### Added
