@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.34] - 2026-11-05
+
+### Fixed
+- **Terminal State Guard for Desktop Notifications (#182)**:
+  - Restricted HTML5 Desktop Notifications (`new Notification`) in `GoalTopBanner` exclusively to terminal states (`COMPLETED` or `FAILED`).
+  - Fixed false-positive `⚠️ Goal Failed undefined ()` notification popping up on desktop whenever DSH is started or restarted.
+  - Added safe fallback for missing goal title and formatted duration.
+  - Ensured SSE and REST `/dsh-goal/state` fallback responses supply explicit `state: 'IDLE'` and `title: ''` before engine initialization.
+  - Added unit test suite `test/desktop-notification.test.mjs` verifying notification gate logic and state transitions.
+
 ## [0.2.33] - 2026-10-22
 
 ### Added
