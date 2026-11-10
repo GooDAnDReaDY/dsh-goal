@@ -13,9 +13,9 @@ test('Repository Hygiene: docs/plans is ignored by git', () => {
   assert.ok(result.includes('docs/plans'), 'docs/plans must be ignored by git');
 });
 
-test('Repository Hygiene: package-lock.json is not present in repository root', () => {
+test('Repository Hygiene: package-lock.json is present in repository root (#184)', () => {
   const lockPath = path.join(rootDir, 'package-lock.json');
-  assert.equal(fs.existsSync(lockPath), false, 'package-lock.json must not exist');
+  assert.equal(fs.existsSync(lockPath), true, 'package-lock.json must exist');
 });
 
 test('Repository Hygiene: package.json files array does not contain redundant package.json', () => {

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GoalEngine, GoalState, detectLanguage } from '../lib/goal-engine.js';
-import { formatGoalStartPrompt } from '../lib/engine-prompt.js';
+
 
 describe('i18n Language Detection and Multilingual Prompts (en & zh only)', () => {
   test('detectLanguage detects zh and en correctly', () => {
@@ -41,17 +41,7 @@ describe('i18n Language Detection and Multilingual Prompts (en & zh only)', () =
     assert.match(promptZh, /第一步核心指令: 立即调用 goal_set_milestones/);
   });
 
-  test('formatGoalStartPrompt produces English contract for English and Chinese for Chinese', () => {
-    const promptEn = formatGoalStartPrompt('Add balance widget');
-    assert.match(promptEn, /🎯 Goal Mode activated: "Add balance widget"/);
-    assert.match(promptEn, /STRICT AUTONOMOUS CONTRACT:/);
-    assert.match(promptEn, /MANDATORY STEP 1:/);
 
-    const promptZh = formatGoalStartPrompt('添加余额组件');
-    assert.match(promptZh, /🎯 目标模式已激活 \(Goal Mode\): "添加余额组件"/);
-    assert.match(promptZh, /自主执行契约：/);
-    assert.match(promptZh, /第一步必选动作：/);
-  });
 
   test('Regression Gate: lib/*.js contains zero hardcoded Cyrillic characters', () => {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));

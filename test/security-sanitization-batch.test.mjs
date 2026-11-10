@@ -411,10 +411,15 @@ test('Issue #172: getRequestRejection enforces connection authentication and fai
   };
   assert.equal(getRequestRejection(dnsRebindReq, { connection: { requestRejection: () => undefined } }), 403);
 
-  // 7. Loopback caller returns undefined
+  // 7. Loopback caller without connection service returns undefined (CLI fallback)
   const loopbackReq = {
     socket: { remoteAddress: '127.0.0.1' },
     headers: { host: '127.0.0.1:3080' },
   };
   assert.equal(getRequestRejection(loopbackReq), undefined);
+
+  // 8. Issue #186: Loopback caller must still be rejected if connection service rejects (401/403)
+  assert.equal(getRequestRejection(loopbackReq, { connection: { requestRejection: () => 401 } }), 401);
+  assert.equal(getRequestRejection(loopbackReq, { connection: { requestRejection: () => 403 } }), 403);
+  assert.equal(getRequestRejection(loopbackReq, { connection: { requestRejection: () => undefined } }), undefined);
 });

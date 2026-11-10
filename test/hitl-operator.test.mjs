@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { GoalEngine } from '../lib/goal-engine.js';
@@ -5,6 +6,7 @@ import { GoalState } from '../lib/goal-engine-constants.js';
 import { askOperatorQuery, answerOperatorQuery, formatOperatorAnswerPrompt } from '../lib/engine-operator-query.js';
 import { buildStatePromptInjection } from '../lib/engine-prompt.js';
 import { registerTools } from '../lib/tools.js';
+import { registerRoutes } from '../lib/routes.js';
 
 test('Issue #166: askOperatorQuery validates question and pauses goal when blocking', () => {
   const goal = {
@@ -160,4 +162,57 @@ test('Issue #166: Tool registration goal_ask_operator invokes engine correctly',
   assert.equal(res.isBlocking, true);
   assert.equal(engine.getSnapshot(sid).waitingForOperator, true);
   assert.equal(engine.getSnapshot(sid).state, GoalState.PAUSED);
+});
+
+test('Issue #185: routes.js answer_operator formats prompt via formatOperatorAnswerPrompt', async () => {
+  const engine = new GoalEngine({ storagePath: null });
+  const sid = 'sess-route-hitl';
+  engine.startGoal('Setup deployment pipeline', { mode: 'act' }, sid);
+  engine.askOperator({ question: 'Deploy to staging first?', options: ['Yes', 'No'] }, sid);
+
+  let capturedPrompt = '';
+  let capturedSid = '';
+  const resumeActiveAgent = (prompt, s) => {
+    capturedPrompt = prompt;
+    capturedSid = s;
+  };
+
+  let routeHandler;
+  const fakeCtx = {
+    webServer: {
+      register: ({ path, handler }) => {
+        routeHandler = handler;
+        return () => {};
+      },
+    },
+  };
+
+  registerRoutes(fakeCtx, { engine, resumeActiveAgent });
+  assert.ok(routeHandler, 'Route handler must be registered');
+
+  // Simulate POST /dsh-goal/action with action: answer_operator
+  const req = new EventEmitter();
+  req.method = 'POST';
+  req.url = '/dsh-goal/action';
+  req.headers = { host: '127.0.0.1:3080' };
+  req.socket = { remoteAddress: '127.0.0.1' };
+
+  let responseBody = '';
+  const res = {
+    statusCode: 200,
+    setHeader: () => {},
+    writeHead: (code, headers) => { res.statusCode = code; },
+    end: (chunk) => { if (chunk) responseBody += chunk; },
+  };
+
+  const handlerPromise = routeHandler(req, res);
+  req.emit('data', Buffer.from(JSON.stringify({ action: 'answer_operator', answer: 'Yes, deploy to staging', sessionId: sid })));
+  req.emit('end');
+
+  await handlerPromise;
+  assert.equal(res.statusCode, 200);
+  assert.equal(capturedSid, sid);
+  assert.match(capturedPrompt, /\[OPERATOR RESPONSE TO YOUR QUERY\]/);
+  assert.match(capturedPrompt, /Deploy to staging first\?/);
+  assert.match(capturedPrompt, /Yes, deploy to staging/);
 });
