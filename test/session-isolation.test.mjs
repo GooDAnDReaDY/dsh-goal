@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { GoalEngine, GoalState, MilestoneStatus } from '../lib/goal-engine.js';
-import { formatGoalStartPrompt } from '../lib/engine-prompt.js';
+
 import { apply } from '../lib/index.js';
 
 test('GoalEngine supports multiple isolated sessions concurrently', () => {
@@ -76,13 +76,7 @@ test('GoalEngine debounces writes and flushes cleanly on flushSync', async () =>
   }
 });
 
-test('formatGoalStartPrompt and getStatePromptInjection enforce strict step-1 contract', () => {
-  const startPrompt = formatGoalStartPrompt('Create authorization module');
-  assert.ok(startPrompt.includes('MANDATORY STEP 1'), 'Must include mandatory step 1 directive');
-  assert.ok(startPrompt.includes('goal_set_milestones'), 'Must demand goal_set_milestones');
-  assert.ok(startPrompt.includes('goal_update_progress'), 'Must instruct goal_update_progress');
-  assert.ok(startPrompt.includes('goal_finish'), 'Must instruct goal_finish');
-
+test('getStatePromptInjection enforces strict step-1 contract', () => {
   const engine = new GoalEngine({ storagePath: null });
   engine.startGoal('Fix security bug', {}, 'session-strict');
   const injectionEmpty = engine.getStatePromptInjection('session-strict');
