@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.2.35] - 2026-11-10
+
+### Fixed
+- **Fail-Closed Loopback & LAN Proxy Authorization (#186)**:
+  - Enforced authoritative DSH core authentication gate (`connection.requestRejection`) prior to any loopback caller admission in `lib/routes.js`.
+  - Blocked unauthenticated access to `/state`, `/events`, `/templates`, and `/action` for loopback requests and traffic proxied via `dsh-lanmode`.
+  - Maintained loopback fallback admission strictly for environments where connection service is physically absent (offline CLI, test runners).
+  - Added security regression tests verifying 401/403 rejection on loopback sockets when rejected by core connection service.
+- **Dependency Reproducibility & Peer Range Verification (#184)**:
+  - Added `semver: "^7.8.6"` to `devDependencies` in `package.json`.
+  - Generated and committed `package-lock.json` (lockfileVersion 3), enabling `npm ci` and clean-clone verification with 0 vulnerabilities in `npm audit`.
+  - Updated repository hygiene test suite to enforce presence of `package-lock.json`.
+- **Deduplication and Canonical Assembly of HITL Operator Prompts (#185)**:
+  - Connected `answer_operator` action in `lib/routes.js` to canonical `formatOperatorAnswerPrompt(goal, detectedLang)` in `lib/engine-operator-query.js`.
+  - Eliminated dead export and redundant test baggage by removing obsolete `formatGoalStartPrompt` from `lib/engine-prompt.js`.
+  - Added route integration tests in `test/hitl-operator.test.mjs`.
+
+## [0.2.34] - 2026-11-05
+
+### Fixed
+- **Terminal State Guard for Desktop Notifications (#182)**:
+  - Restricted HTML5 Desktop Notifications (`new Notification`) in `GoalTopBanner` exclusively to terminal states (`COMPLETED` or `FAILED`).
+  - Fixed false-positive `⚠️ Goal Failed undefined ()` notification popping up on desktop whenever DSH is started or restarted.
+  - Added safe fallback for missing goal title and formatted duration.
+  - Ensured SSE and REST `/dsh-goal/state` fallback responses supply explicit `state: 'IDLE'` and `title: ''` before engine initialization.
+  - Added unit test suite `test/desktop-notification.test.mjs` verifying notification gate logic and state transitions.
+
 ## [0.2.33] - 2026-10-22
 
 ### Added
