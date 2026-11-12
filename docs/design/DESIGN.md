@@ -112,7 +112,9 @@
 - При откате git-снимка проверяется принадлежность пути доверенному корню сессии (confinement guard).
 - Все REST-маршруты `/dsh-goal/*` защищены через `getRequestRejection` и `isTrustedCaller` с делегированием аутентификации ядру DSH (`connection.requestRejection`).
 
-### 5.1 Сетевая модель доверия и строгая аутентификация (Fail-Closed Auth Boundary, #172, #186)
+### 5.1 Сетевая модель доверия и строгая аутентификация (Fail-Closed Auth Boundary, #172, #186, #188)
+
+- **Единый шлюз `verifyRouteAccess` (#188)**: Все маршруты плагина (`/events`, `/templates`, `/state`, `/diff`, `/action`) защищены через унифицированный шлюз `verifyRouteAccess(req, res, ctx)`. Он объединяет проверку `isTrustedCaller`, поддержку сервисных токенов `DSH_GOAL_AUTH_TOKEN` (`x-dsh-auth-token`, `Authorization: Bearer`) и делегирование аутентификации ядру `connection.requestRejection`.
 
 - **Аутентификация ядра DSH (`connection.requestRejection`) (#186, #172)**: Все входящие запросы к REST/SSE маршрутам (`/dsh-goal/events`, `/dsh-goal/templates`, `/dsh-goal/state`, `/dsh-goal/action`) проверяются через `ctx.connection.requestRejection(req)`. Проверка ядра выполняется до любых допусков loopback, предотвращая обход авторизации через loopback-прокси (`dsh-lanmode#479`) и неавторизованные локальные запросы. Неавторизованные запросы безусловно отклоняются с кодом `401 Unauthorized` или `403 Forbidden`.
 - **Отказ от ненадёжного доверия по LAN IP (#172)**: Архитектурный компромисс, при котором запросы с LAN IP принимались лишь при наличии заголовка `Sec-Fetch-Site: same-origin` и совпадении `Origin`/`Host`, устранён как уязвимый к подделке заголовков неавторизованными локальными клиентами (`curl`, скрипты). Наличие LAN IP само по себе не является аутентификацией.
@@ -393,3 +395,17 @@
 - Репозиторий фиксирует точные версии дерева зависимостей в `package-lock.json` (lockfileVersion 3).
 - В `devDependencies` явно зафиксирован пакет `semver` для контрактных тестов диапазонов `peerDependencies`.
 - Чистый клон гарантированно проходит `npm ci`, `npm audit` (0 уязвимостей) и полный набор тестов `npm test`.
+
+---
+
+## 17. Декомпозиция маршрутов и наблюдаемость асинхронных операций (#188, #189)
+
+### 17.1 Единый шлюз доступа к маршрутам (`verifyRouteAccess`, #188)
+- Экспортируемая функция `isTrustedCaller` интегрирована в централизованный охранный шлюз `verifyRouteAccess(req, res, ctx)`, устраняя дублирование логики отклонения запросов (boilerplate) во всех эндпоинтах (`/dsh-goal/events`, `/dsh-goal/templates`, `/dsh-goal/state`, `/dsh-goal/diff`, `/dsh-goal/action`).
+- Защита поддерживает заголовок `x-dsh-auth-token` и `Authorization: Bearer <token>` для безопасных сервисных вызовов вне сессии браузера.
+- Покрыта интеграционными тестами сетевого уровня в `test/security-sanitization-batch.test.mjs`.
+
+### 17.2 Декомпозиция диспетчера действий (`lib/routes-actions.js`, #189)
+- Файл `lib/routes.js` сокращён с 1014 до ~540 строк путём вынесения диспетчера 24 POST-действий цели в специализированный модуль `lib/routes-actions.js`.
+- Сохранена полная синхронная отзывчивость для синхронных действий и промис-модель для фоновых асинхронных задач (`kanban_sync`, `notify_telegram`).
+- Устранены немые блоки перехвата ошибок (`.catch(() => {})`) в `lib/goal-engine.js`: все предупреждения и сбои синхронизации с внешними шлюзами маршрутизируются в системный логгер хоста `ctx.logger.warn`.
