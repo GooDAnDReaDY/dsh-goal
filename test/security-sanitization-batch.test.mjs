@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 import { resolveGiteaAuth, resolveRepoInfo, syncMilestoneWithIssue } from '../lib/engine-issue-sync.js';
-import { isTrustedCaller, isTrustedHost, registerRoutes, getRequestRejection, getConnection } from '../lib/routes.js';
+import { isTrustedCaller, isTrustedHost, registerRoutes, getRequestRejection, getConnection, verifyRouteAccess } from '../lib/routes.js';
 import { isValidGitRef, isGitRepository, createGoalBranch, mergeGoalBranch, discardGoalBranch } from '../lib/engine-git-branch.js';
 import { getSafeCwd, MilestoneStatus } from '../lib/goal-engine-constants.js';
 import { GoalEngine } from '../lib/goal-engine.js';
@@ -422,4 +422,99 @@ test('Issue #172: getRequestRejection enforces connection authentication and fai
   assert.equal(getRequestRejection(loopbackReq, { connection: { requestRejection: () => 401 } }), 401);
   assert.equal(getRequestRejection(loopbackReq, { connection: { requestRejection: () => 403 } }), 403);
   assert.equal(getRequestRejection(loopbackReq, { connection: { requestRejection: () => undefined } }), undefined);
+});
+
+
+test('Issue #188: verifyRouteAccess unified guard and route-level token auth integration', () => {
+  function createMockRes() {
+    return {
+      statusCode: 200,
+      headers: {},
+      ended: false,
+      body: '',
+      setHeader(name, val) { this.headers[name] = val; },
+      end(data = '') { this.ended = true; this.body = String(data); },
+    };
+  }
+
+  // 1. Loopback request admitted
+  const loopbackReq = {
+    socket: { remoteAddress: '127.0.0.1' },
+    headers: { host: '127.0.0.1:3080' },
+  };
+  const res1 = createMockRes();
+  assert.equal(verifyRouteAccess(loopbackReq, res1), true);
+  assert.equal(res1.ended, false);
+  assert.equal(res1.statusCode, 200);
+
+  // 2. Untrusted LAN request rejected with 401
+  const untrustedLanReq = {
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: { host: '192.168.1.111:3080' },
+  };
+  const res2 = createMockRes();
+  assert.equal(verifyRouteAccess(untrustedLanReq, res2), false);
+  assert.equal(res2.ended, true);
+  assert.equal(res2.statusCode, 401);
+  assert.ok(res2.body.includes('Unauthorized'));
+
+  // 3. Untrusted cross-site request rejected with 403
+  const crossSiteReq = {
+    socket: { remoteAddress: '192.168.1.150' },
+    headers: {
+      host: '192.168.1.111:3080',
+      'sec-fetch-site': 'cross-site',
+      origin: 'http://192.168.1.111:3080',
+    },
+  };
+  const res3 = createMockRes();
+  assert.equal(verifyRouteAccess(crossSiteReq, res3), false);
+  assert.equal(res3.ended, true);
+  assert.equal(res3.statusCode, 403);
+  assert.ok(res3.body.includes('Forbidden'));
+
+  // 4. Token auth admitted via DSH_GOAL_AUTH_TOKEN / authToken
+  const origToken = process.env.DSH_GOAL_AUTH_TOKEN;
+  try {
+    process.env.DSH_GOAL_AUTH_TOKEN = 'secret-pass-token';
+    const authHeaderReq = {
+      socket: { remoteAddress: '192.168.1.150' },
+      headers: {
+        host: '192.168.1.111:3080',
+        'x-dsh-auth-token': 'secret-pass-token',
+      },
+    };
+    const res4 = createMockRes();
+    assert.equal(verifyRouteAccess(authHeaderReq, res4), true);
+    assert.equal(res4.ended, false);
+
+    const bearerReq = {
+      socket: { remoteAddress: '192.168.1.150' },
+      headers: {
+        host: '192.168.1.111:3080',
+        authorization: 'Bearer secret-pass-token',
+      },
+    };
+    const res5 = createMockRes();
+    assert.equal(verifyRouteAccess(bearerReq, res5), true);
+    assert.equal(res5.ended, false);
+
+    const wrongTokenReq = {
+      socket: { remoteAddress: '192.168.1.150' },
+      headers: {
+        host: '192.168.1.111:3080',
+        'x-dsh-auth-token': 'wrong-token',
+      },
+    };
+    const res6 = createMockRes();
+    assert.equal(verifyRouteAccess(wrongTokenReq, res6), false);
+    assert.equal(res6.ended, true);
+    assert.equal(res6.statusCode, 401);
+  } finally {
+    if (origToken !== undefined) {
+      process.env.DSH_GOAL_AUTH_TOKEN = origToken;
+    } else {
+      delete process.env.DSH_GOAL_AUTH_TOKEN;
+    }
+  }
 });
