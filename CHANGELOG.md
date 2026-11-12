@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.36] - 2026-11-12
+
+### Fixed
+- **Unified Route Access Guard & Dead Export Cleanup (#188)**:
+  - Connected `isTrustedCaller` into central route access guard `verifyRouteAccess(req, res, ctx)` across all endpoints (`/events`, `/templates`, `/state`, `/diff`, `/action`).
+  - Added support for service token authentication via `DSH_GOAL_AUTH_TOKEN` (`x-dsh-auth-token` and `Authorization: Bearer <token>`).
+  - Added route-level integration tests covering token authentication and access control in `test/security-sanitization-batch.test.mjs`.
+- **Domain Decomposition of Routes & Async Error Observability (#189)**:
+  - Decomposed `lib/routes.js` from 1014 down to 544 lines by extracting the 24 POST action handlers into `lib/routes-actions.js`.
+  - Preserved synchronous dispatch latency for standard actions and Promise resolution for background jobs (`kanban_sync`, `notify_telegram`).
+  - Replaced silent `.catch(() => {})` handlers in `lib/goal-engine.js` with structured warning logs via `ctx.logger.warn`.
+  - Maintained `lib/goal-engine.js` line count at 595 lines (below the 600-line audit limit).
+  - Updated design specification in `docs/design/DESIGN.md` (Sections 5.1 and 17).
+
 ## [0.2.35] - 2026-11-10
 
 ### Fixed
