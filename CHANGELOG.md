@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.37] - 2026-11-16
+
+### Fixed
+- **Cosmokit Dependency Skew & Cross-Platform Line Endings (#195)**:
+  - Added `@deepseek-ai/cosmokit: ^1.9.0` to `devDependencies` to prevent npm hoisting older cosmokit 1.8.6 (from webserver subdependencies) which lacked `createVolatile`.
+  - Added `.gitattributes` to enforce LF line endings (`* text=auto eol=lf`) and resolved CRLF line-ending mismatches on Windows clean clones.
+- **Untrack Internal Planning Documents (#199)**:
+  - Untracked `.planning/*` from git index and ignored in `.gitignore`.
+  - Updated repository hygiene test suite (`test/repository-hygiene.test.mjs`) to verify `.planning/` remains ignored and uncommitted.
+- **In-Memory Storage Isolation & Samba Artifact Prevention (#200)**:
+  - Added explicit `:memory:` check in `EngineStore` (`lib/engine-store.js`) constructor and persistence methods (`setStoragePath`, `loadStateFromDisk`, `scheduleSave`, `writeStateToDiskSync`).
+  - Prevented test suites using `:memory:` storage from writing literal `:memory:` files to the working directory, eliminating Samba NTFS name-mangled artifacts (`_TXIHS~I`).
+  - Added `:memory:` and `_TXIHS*` to `.gitignore`.
+- **Deduplication of Gitea Issue Labels (#206)**:
+  - Consolidated duplicated labels in Gitea repository: migrated issues from duplicate IDs to canonical labels `type/security` (ID 2646) and `type/tech-debt` (ID 2309), followed by cleanup of redundant labels.
+
 ## [0.2.36] - 2026-11-12
 
 ### Fixed
