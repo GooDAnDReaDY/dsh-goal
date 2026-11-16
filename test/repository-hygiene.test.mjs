@@ -8,9 +8,13 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
-test('Repository Hygiene: docs/plans is ignored by git', () => {
+test('Repository Hygiene: docs/plans and .planning are ignored by git (#199)', () => {
   const result = execSync('git check-ignore docs/plans/task_plan.md', { cwd: rootDir, encoding: 'utf8' }).trim();
   assert.ok(result.includes('docs/plans'), 'docs/plans must be ignored by git');
+  const planResult = execSync('git check-ignore .planning/task_plan.md', { cwd: rootDir, encoding: 'utf8' }).trim();
+  assert.ok(planResult.includes('.planning'), '.planning must be ignored by git');
+  const trackedPlans = execSync('git ls-files .planning', { cwd: rootDir, encoding: 'utf8' }).trim();
+  assert.equal(trackedPlans, '', '.planning must not be tracked in git index');
 });
 
 test('Repository Hygiene: package-lock.json is present in repository root (#184)', () => {
@@ -49,7 +53,7 @@ test('Repository Hygiene (Issue #151): index.md, deploy.sh, and AGENTS.md exist;
   assert.equal(fs.existsSync(path.join(rootDir, 'findings.md')), false, 'findings.md must not be in root');
   assert.equal(fs.existsSync(path.join(rootDir, 'progress.md')), false, 'progress.md must not be in root');
   assert.equal(fs.existsSync(path.join(rootDir, 'task_plan.md')), false, 'task_plan.md must not be in root');
-  assert.ok(fs.existsSync(path.join(rootDir, '.planning', '151-repo-hygiene', 'findings.md')), 'findings.md in .planning');
+  assert.equal(execSync('git ls-files .planning', { cwd: rootDir, encoding: 'utf8' }).trim(), '', '.planning must not be in git index');
 });
 
 test('Package Manifest Hygiene (Issue #149): peerDependencies does not self-reference @deepseek-ai/dsh-goal', () => {
@@ -62,4 +66,9 @@ test('Package Manifest Hygiene (Issue #149): peerDependencies does not self-refe
 test('Dead Code Hygiene (Issue #131 & #147): dead modules are removed from lib', () => {
   assert.equal(fs.existsSync(path.join(rootDir, 'lib', 'command-handler.js')), false, 'lib/command-handler.js must be deleted');
   assert.equal(fs.existsSync(path.join(rootDir, 'lib', 'card-form-state.js')), false, 'lib/card-form-state.js must be deleted');
+});
+
+test('Repository Hygiene (Issue #200): in-memory storage path :memory: never leaves artifacts on disk', () => {
+  assert.equal(fs.existsSync(path.join(rootDir, ':memory:')), false, ':memory: must not exist in root');
+  assert.equal(fs.existsSync(path.join(rootDir, '_TXIHS~I')), false, '_TXIHS~I must not exist in root');
 });
