@@ -966,43 +966,30 @@
 
                   ),
 
-                  React.createElement(
+                  state.runtimeMode !== 'companion'
+                    ? React.createElement(
+                        'button',
+                        {
+                          className: 'dsh-goal-btn dsh-goal-btn-copy' + (copiedNotes ? ' copied' : ''),
+                          onClick: handleCopyReleaseNotes,
+                          title: t('copyReleaseNotes') || 'Copy Conventional Release Notes',
+                        },
+                        copiedNotes ? (t('releaseNotesCopied') || '✅ Release Notes Copied!') : (t('copyReleaseNotes') || '📝 Release Notes'),
+                      )
+                    : null,
 
-                    'button',
-
-                    {
-
-                      className: 'dsh-goal-btn dsh-goal-btn-copy' + (copiedNotes ? ' copied' : ''),
-
-                      onClick: handleCopyReleaseNotes,
-
-                      title: t('copyReleaseNotes') || 'Copy Conventional Release Notes',
-
-                    },
-
-                    copiedNotes ? (t('releaseNotesCopied') || '✅ Release Notes Copied!') : (t('copyReleaseNotes') || '📝 Release Notes'),
-
-                  ),
-
-                  React.createElement(
-
-                    'button',
-
-                    {
-
-                      className: 'dsh-goal-btn dsh-goal-btn-copy' + (notifiedTelegram ? ' copied' : ''),
-
-                      disabled: dispatchingTelegram,
-
-                      onClick: handleSendTelegram,
-
-                      title: t('notifyTelegram') || 'Send Digest to Telegram',
-
-                    },
-
-                    notifiedTelegram ? (t('telegramNotified') || '✅ Sent to Telegram!') : (t('notifyTelegram') || '✈️ Telegram'),
-
-                  ),
+                  state.runtimeMode !== 'companion'
+                    ? React.createElement(
+                        'button',
+                        {
+                          className: 'dsh-goal-btn dsh-goal-btn-copy' + (notifiedTelegram ? ' copied' : ''),
+                          disabled: dispatchingTelegram,
+                          onClick: handleSendTelegram,
+                          title: t('notifyTelegram') || 'Send Digest to Telegram',
+                        },
+                        notifiedTelegram ? (t('telegramNotified') || '✅ Sent to Telegram!') : (t('notifyTelegram') || '✈️ Telegram'),
+                      )
+                    : null,
 
                   React.createElement(
 

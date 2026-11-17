@@ -104,6 +104,32 @@
   `[Goal Milestones]: Active: "<title>" | Checklist: [x] done, [ ] pending`
 - При отсутствии активной цели или её паузе/блокировке контекст не инжектируется.
 
+### 4.3 Матрица возможностей: Companion (Addon) Mode vs Standalone Mode (#191, #194)
+
+Плагин поддерживает два детерминированных режима работы:
+1. **Companion Mode (штатный Addon-режим)**: активен по умолчанию (`standaloneMode: false`) при наличии встроенной службы целей `ctx.goals`. В этом режиме плагин не дублирует ядро DSH, обогащая нативную сессию этапами, чеклистами, гейтами приёмки, токен-бюджетом и git-снимками.
+2. **Standalone Mode (автономный режим)**: активируется при `standaloneMode: true` в настройках либо автоматически при физическом отсутствии службы `ctx.goals` (изолированные unit-тесты, CLI без полного ядра). В этом режиме активен собственный движок `GoalEngine` (`ctx.goalEngine`), поддерживающий локальные очереди, sub-goals, kanban и plan mode.
+
+| Функция / Возможность | Companion (Addon) Mode | Standalone Mode | Поведение при вызове в несовместимом режиме |
+|---|---|---|---|
+| Управление этапами (`goal_milestones`, `MilestoneManager`) | ✅ Доступно | ✅ Доступно | — |
+| Чеклисты этапов (`toggleChecklistItem`, `goal_checklist`) | ✅ Доступно | ✅ Доступно | — |
+| Контроль бюджета токенов (`TokenBudgetGuard`, `checkBudget`) | ✅ Доступно | ✅ Доступно | — |
+| Расширение бюджета (`extend_budget`, `extendBudget`) | ✅ Доступно | ✅ Доступно | — |
+| Git-снимки и откат (`GitSnapshotManager`, `rollback_milestone`) | ✅ Доступно | ✅ Доступно | — |
+| Приёмочный гейт этапов (`runMilestoneVerification`) | ✅ Доступно | ✅ Доступно | — |
+| Каталог и создание из шаблонов (`templates`, `instantiate`) | ✅ Доступно | ✅ Доступно | — |
+| Экспорт Markdown-отчёта по завершению (`saveGoalReportFile`) | ✅ Доступно | ✅ Доступно | — |
+| Оперативное вмешательство / подсказка (`nudge`, `intervene`) | ✅ Доступно (`resumeActiveAgent`) | ✅ Доступно (`engine.nudge`/`intervene`) | — |
+| Просмотр Git Diff (`GET /dsh-goal/diff`) | ✅ Доступно (`getGitDiff`) | ✅ Доступно (`engine.getDiff`) | — |
+| Двухфазный Plan Mode (`set_mode`, `approve_plan`) | ❌ Не поддерживается (управляется ядром) | ✅ Доступно (`GoalEngine`) | `501 Not Implemented` (`MODE_NOT_SUPPORTED`) |
+| Предварительное планирование (`preplan_approve`) | ❌ Не поддерживается | ✅ Доступно | `501 Not Implemented` (`MODE_NOT_SUPPORTED`) |
+| Рекурсивные подцели (`goal_spawn_subgoal`, `spawn_subgoal`) | ❌ Не поддерживается | ✅ Доступно | `501` / Tool error |
+| Интерактивные вопросы оператору (`goal_ask_operator`, `answer`) | ❌ Не поддерживается (рекомендуется `ask_question`) | ✅ Доступно | `501` / Tool error |
+| Синхронизация с Kanban (`kanban_move`, `kanban_sync`) | ❌ Не поддерживается | ✅ Доступно | `501 Not Implemented` (`MODE_NOT_SUPPORTED`) |
+| Экспорт Release Notes (`export_release_notes`) | ❌ Не поддерживается | ✅ Доступно | `501 Not Implemented` (`MODE_NOT_SUPPORTED`) |
+| Уведомления в Telegram (`notify_telegram`) | ❌ Не поддерживается | ✅ Доступно | `501 Not Implemented` (`MODE_NOT_SUPPORTED`) |
+
 ---
 
 ## 5. Хранение данных и безопасность

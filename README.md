@@ -231,6 +231,7 @@ dsh-goal:
 | `maxTokenBudget` | `number` | `0` | Safety token ceiling (0 = disabled); triggers soft-pause when exceeded |
 | `budgetWarningThreshold` | `number` | `80` | Percentage of budget consumed before warning model to wrap up |
 | `autoCheckpointOnMilestone` | `boolean` | `false` | Automatically create git snapshot commits upon milestone completion |
+| `standaloneMode` | `boolean` | `false` | Force standalone GoalEngine execution instead of native core GoalService addon |
 
 ---
 
