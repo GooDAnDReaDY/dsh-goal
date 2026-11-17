@@ -74,3 +74,47 @@ test('Repository Hygiene (Issue #200): in-memory storage path :memory: never lea
   assert.equal(fs.existsSync(path.join(rootDir, ':memory:')), false, ':memory: must not exist in root');
   assert.equal(fs.existsSync(path.join(rootDir, '_TXIHS~I')), false, '_TXIHS~I must not exist in root');
 });
+
+test('Repository Hygiene (Issue #198): multilingual DESIGN contract exists in EN, RU, and ZH', () => {
+  const enPath = path.join(rootDir, 'docs', 'design', 'DESIGN.md');
+  const ruPath = path.join(rootDir, 'docs', 'design', 'DESIGN.ru.md');
+  const zhPath = path.join(rootDir, 'docs', 'design', 'DESIGN.zh.md');
+
+  assert.ok(fs.existsSync(enPath) && fs.statSync(enPath).size > 1000, 'DESIGN.md (EN) must exist and be non-empty');
+  assert.ok(fs.existsSync(ruPath) && fs.statSync(ruPath).size > 1000, 'DESIGN.ru.md (RU) must exist and be non-empty');
+  assert.ok(fs.existsSync(zhPath) && fs.statSync(zhPath).size > 1000, 'DESIGN.zh.md (ZH) must exist and be non-empty');
+
+  const readmeEn = fs.readFileSync(path.join(rootDir, 'README.md'), 'utf8');
+  const readmeRu = fs.readFileSync(path.join(rootDir, 'README.ru.md'), 'utf8');
+  const readmeZh = fs.readFileSync(path.join(rootDir, 'README.zh.md'), 'utf8');
+
+  assert.ok(readmeEn.includes('docs/design/DESIGN.md'), 'README.md must link to DESIGN.md');
+  assert.ok(readmeRu.includes('docs/design/DESIGN.ru.md'), 'README.ru.md must link to DESIGN.ru.md');
+  assert.ok(readmeZh.includes('docs/design/DESIGN.zh.md'), 'README.zh.md must link to DESIGN.zh.md');
+});
+
+test('Repository Hygiene (Issue #197): DESIGN.md documents all 7 tools and does not reference settings.plugin.item as active slot', () => {
+  const designEn = fs.readFileSync(path.join(rootDir, 'docs', 'design', 'DESIGN.md'), 'utf8');
+  const designRu = fs.readFileSync(path.join(rootDir, 'docs', 'design', 'DESIGN.ru.md'), 'utf8');
+
+  const expectedTools = [
+    'goal_milestones',
+    'goal_checklist',
+    'goal_set_milestones',
+    'goal_update_progress',
+    'goal_finish',
+    'goal_ask_operator',
+    'goal_spawn_subgoal',
+  ];
+
+  for (const tool of expectedTools) {
+    assert.ok(designEn.includes(tool), `DESIGN.md must document tool ${tool}`);
+    assert.ok(designRu.includes(tool), `DESIGN.ru.md must document tool ${tool}`);
+  }
+
+  // settings.plugin.item must not be listed as an active slot (only as obsolete/historical)
+  assert.equal(designEn.includes('Settings Card (`settings.plugin.item`)'), false, 'Obsolete settings.plugin.item heading must be replaced');
+  assert.equal(designRu.includes('Settings Card (`settings.plugin.item`)'), false, 'Obsolete settings.plugin.item heading must be replaced in Russian doc');
+  assert.ok(designEn.includes('plugins.item'), 'DESIGN.md must specify plugins.item slot');
+  assert.ok(designEn.includes('plugins.row.config'), 'DESIGN.md must specify plugins.row.config slot');
+});

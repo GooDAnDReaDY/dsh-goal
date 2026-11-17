@@ -22,6 +22,13 @@
   <a href="README.zh.md"><b>🇨🇳 中文说明</b></a>
 </p>
 
+<p align="center">
+  📄 <b>Дизайн-контракт:</b>
+  <a href="docs/design/DESIGN.ru.md"><b>Русский</b></a> •
+  <a href="docs/design/DESIGN.md"><b>English</b></a> •
+  <a href="docs/design/DESIGN.zh.md"><b>中文</b></a>
+</p>
+
 <table align="center">
   <tr>
     <td align="center">

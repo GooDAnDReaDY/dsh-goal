@@ -1,5 +1,4 @@
     function injectStylesOnce() {
-
       if (typeof document === 'undefined') return;
 
       if (document.getElementById('dsh-goal-styles')) return;
@@ -13,7 +12,6 @@
       style.textContent = CSS_STYLES;
 
       document.head.appendChild(style);
-
     }
 
     // Synthesize audio chimes via Web Audio API (Item 6) & soundScheme (#92)
@@ -68,7 +66,6 @@
           : [392.00, 311.13, 261.63];
 
         notes.forEach((freq, idx) => {
-
           const osc = actx.createOscillator();
 
           const gain = actx.createGain();
@@ -90,17 +87,12 @@
           osc.start(now + idx * 0.12);
 
           osc.stop(now + idx * 0.12 + 0.45);
-
         });
 
         setTimeout(() => {
-
           try { actx.close(); } catch (err) { /* ignore audio context close error */ }
-
         }, 2000);
-
       } catch (err) { /* handled defensively */ }
-
     }
 
     // Voice announcement via Web Speech API (#92)
