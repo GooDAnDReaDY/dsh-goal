@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.38] - 2026-11-17
+
+### Fixed
+- **Budget Extension Crash (#193)**:
+  - Resolved runtime TypeError on "+50k Tokens & Resume" button click by implementing `extendBudget(goalId, addTokens)` on `TokenBudgetGuard`.
+  - Added logic to unblock throttled/warned goals so executions continue smoothly upon budget extension.
+- **Milestone Checklist Toggle Crash in Companion Mode (#192)**:
+  - Added `toggleChecklistItem(goalId, milestoneId, index, done)` to `MilestoneManager` for safe checklist mutation when running alongside native `ctx.goals`.
+  - Prevented array index out-of-bounds exceptions when updating checklist items.
+- **Deterministic Mode Selection (#191)**:
+  - Added explicit `standaloneMode` boolean configuration flag to plugin schema and apply settings.
+  - Formalized runtime mode detection: uses native companion mode when `ctx.goals` is available unless `standaloneMode` is explicitly set to true.
+- **Companion Mode Graceful Degradation (#194)**:
+  - Replaced misleading fake `{ ok: true }` responses for standalone-only actions (Plan Mode transitions, sub-goal spawning, kanban synchronization, release notes export) with HTTP 501 `Not Implemented` and code `MODE_NOT_SUPPORTED`.
+  - Dynamically hide unsupported action buttons (Release Notes, Telegram) in client modal when running in companion mode.
+  - Documented complete companion mode vs standalone mode feature matrix in `docs/design/DESIGN.md`.
+
 ## [0.2.37] - 2026-11-16
 
 ### Fixed
