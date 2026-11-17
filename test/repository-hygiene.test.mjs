@@ -56,10 +56,12 @@ test('Repository Hygiene (Issue #151): index.md, deploy.sh, and AGENTS.md exist;
   assert.equal(execSync('git ls-files .planning', { cwd: rootDir, encoding: 'utf8' }).trim(), '', '.planning must not be in git index');
 });
 
-test('Package Manifest Hygiene (Issue #149): peerDependencies does not self-reference @deepseek-ai/dsh-goal', () => {
+test('Package Manifest Hygiene (Issues #149 & #204): peerDependencies declares optional companion services', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-  assert.equal(pkg.peerDependencies?.['@deepseek-ai/dsh-goal'], undefined, 'Must not declare @deepseek-ai/dsh-goal as peer');
-  assert.equal(pkg.peerDependenciesMeta?.['@deepseek-ai/dsh-goal'], undefined, 'Must not declare peerDependenciesMeta for dsh-goal');
+  assert.ok(pkg.peerDependencies?.['@deepseek-ai/dsh-goal'], 'Must declare @deepseek-ai/dsh-goal as optional peer');
+  assert.equal(pkg.peerDependenciesMeta?.['@deepseek-ai/dsh-goal']?.optional, true, 'dsh-goal must be optional');
+  assert.ok(pkg.peerDependencies?.['@deepseek-ai/dsh-token-meter'], 'Must declare @deepseek-ai/dsh-token-meter as optional peer');
+  assert.equal(pkg.peerDependenciesMeta?.['@deepseek-ai/dsh-token-meter']?.optional, true, 'dsh-token-meter must be optional');
   assert.equal(pkg.dependencies?.['@deepseek-ai/schemastery'], undefined, 'Must not duplicate schemastery in dependencies');
 });
 

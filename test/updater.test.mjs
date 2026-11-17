@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { isTrustedUpdateRequest, isNewerVersion, registerPluginUpdater } from '../lib/updater.js';
+import { isTrustedUpdateRequest, isTrustedUpdateReadRequest, isNewerVersion, registerPluginUpdater } from '../lib/updater.js';
 
 // The updater endpoint reports the version installed from package.json, so the test
 // tracks that file instead of hard-coding a release number.
@@ -47,6 +47,38 @@ test('Plugin Updater: isTrustedUpdateRequest enforces loopback, origin, and upda
   }), true, 'Valid loopback same-origin accepted');
 });
 
+test('Plugin Updater (Issue #205): isTrustedUpdateReadRequest guards GET status endpoint', () => {
+  // Loopback allowed
+  assert.equal(isTrustedUpdateReadRequest({
+    headers: { host: 'localhost:3080' },
+    socket: { remoteAddress: '127.0.0.1' },
+  }), true, 'Loopback caller admitted');
+
+  // Remote LAN caller without auth rejected (fail-closed)
+  assert.equal(isTrustedUpdateReadRequest({
+    headers: { host: 'localhost:3080' },
+    socket: { remoteAddress: '192.168.1.55' },
+  }), false, 'Remote LAN caller rejected');
+
+  // Cross-site rejected even from loopback
+  assert.equal(isTrustedUpdateReadRequest({
+    headers: { host: 'localhost:3080', 'sec-fetch-site': 'cross-site' },
+    socket: { remoteAddress: '127.0.0.1' },
+  }), false, 'Cross-site caller rejected');
+
+  // Token auth admitted for remote caller
+  const oldToken = process.env.DSH_GOAL_AUTH_TOKEN;
+  try {
+    process.env.DSH_GOAL_AUTH_TOKEN = 'secret-test-token';
+    assert.equal(isTrustedUpdateReadRequest({
+      headers: { host: 'localhost:3080', 'x-dsh-auth-token': 'secret-test-token' },
+      socket: { remoteAddress: '192.168.1.55' },
+    }), true, 'Token-authenticated remote caller admitted');
+  } finally {
+    process.env.DSH_GOAL_AUTH_TOKEN = oldToken;
+  }
+});
+
 test('Plugin Updater: GET endpoint returns version payload and registers with host webServer', async () => {
   let registeredRoute = null;
   const mockWebServer = {
@@ -70,7 +102,7 @@ test('Plugin Updater: GET endpoint returns version payload and registers with ho
   assert.equal(registeredRoute.path, '/api/dsh-goal/update');
   assert.equal(registeredRoute.kind, 'exact');
 
-  // Test GET request
+  // Test GET request from loopback
   let status = null;
   let headers = {};
   let body = null;
@@ -96,6 +128,26 @@ test('Plugin Updater: GET endpoint returns version payload and registers with ho
   assert.equal(parsed.packageName, '@goodandready/dsh-goal');
   assert.equal(parsed.currentVersion, pkgVersion);
   assert.equal(typeof parsed.updateAvailable, 'boolean');
+  // Issue #205: profileName must not be exposed to callers
+  assert.equal(parsed.profileName, undefined, 'profileName must not be exposed');
+
+  // Test GET request from untrusted LAN caller -> 403 (Issue #205)
+  let lanGetStatus = null;
+  let lanGetBody = null;
+  const lanReq = {
+    method: 'GET',
+    headers: { host: '192.168.1.111:3080' },
+    socket: { remoteAddress: '192.168.1.55' },
+  };
+  const lanRes = {
+    writeHead: (s) => { lanGetStatus = s; },
+    end: (b) => { lanGetBody = b; },
+  };
+
+  await registeredRoute.handler(lanReq, lanRes);
+  assert.equal(lanGetStatus, 403, 'LAN GET request must be rejected with 403');
+  const parsedLanGet = JSON.parse(lanGetBody);
+  assert.equal(parsedLanGet.error, 'Rejected non-local or unauthenticated caller.');
 
   // Test POST request without trusted headers -> 403
   let postStatus = null;

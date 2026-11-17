@@ -151,6 +151,19 @@ Handles `/goal` commands and subcommands:
 
 ---
 
+---
+
+## 🧩 Compatibility & Peer Dependencies
+
+`@goodandready/dsh-goal` operates in two primary modes:
+- **Standalone Mode**: Full autonomous goal execution engine with sub-milestones, HITL tools, budget guards, and diff visualizer. Runs out of the box with zero external companion dependencies.
+- **Companion Mode**: Augments the official `@deepseek-ai/dsh-goal` plugin and `@deepseek-ai/dsh-token-meter` with rich milestones, drawer UI, and token metrics.
+  - Optional peer dependencies declared in `package.json`:
+    - `@deepseek-ai/dsh-goal: ^0.1.7-rc.2 || ^0.2.0-rc.1` (optional)
+    - `@deepseek-ai/dsh-token-meter: ^0.1.7-rc.2 || ^0.2.0-rc.1` (optional)
+
+---
+
 ## 📦 Installation
 
 ```bash

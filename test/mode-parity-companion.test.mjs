@@ -306,3 +306,182 @@ test('Issue #191: Deterministic mode selection via standaloneMode and ctx.goals 
   apply(ctxFallback, { standaloneMode: false });
   assert.ok(ctxFallback.goalEngine, 'Should fallback to GoalEngine when core goals service is absent');
 });
+
+test('Issue #196: Comprehensive companion mode actions (engine === null) with production managers', async () => {
+  const store = new AddonStore(null);
+  const milestoneManager = new MilestoneManager(store);
+  const budgetGuard = new TokenBudgetGuard({ maxTokenBudget: 60000 });
+  const sid = 'sess-companion-full';
+
+  let resumedWith = null;
+  let stoppedAgent = null;
+  const resumeActiveAgent = (prompt, id) => {
+    resumedWith = { prompt, id };
+  };
+  const stopRunningAgents = (id) => {
+    stoppedAgent = id;
+  };
+
+  // Mock native DSH goalsService
+  const goalsMap = new Map();
+  const mockGoalsService = {
+    get: (id) => goalsMap.get(id),
+    create: (data) => {
+      const g = { id: sid, revision: 1, phase: 'active', objective: data.objective, ...data };
+      goalsMap.set(sid, g);
+      return g;
+    },
+    update: (id, updates) => {
+      const g = goalsMap.get(id) || { id };
+      Object.assign(g, updates);
+      goalsMap.set(id, g);
+      return g;
+    },
+    block: (id, reason) => {
+      const g = goalsMap.get(id) || { id };
+      g.phase = 'blocked';
+      g.blockReason = reason;
+      goalsMap.set(id, g);
+      return g;
+    },
+    complete: (id) => {
+      const g = goalsMap.get(id) || { id };
+      g.phase = 'completed';
+      goalsMap.set(id, g);
+      return g;
+    },
+  };
+
+  let routeHandler = null;
+  const mockWebServer = {
+    register: (arg) => {
+      routeHandler = typeof arg === 'function' ? arg : arg?.handler;
+    },
+  };
+  const mockCtx = {
+    webServer: mockWebServer,
+    inject: (deps, cb) => cb(mockCtx),
+    logger: () => ({ info() {}, warn() {}, error() {} }),
+  };
+
+  registerRoutes(mockCtx, {
+    engine: null, // Pure companion mode!
+    milestoneManager,
+    budgetGuard,
+    addonStore: store,
+    goalsService: mockGoalsService,
+    resumeActiveAgent,
+    stopRunningAgents,
+  });
+
+  const dispatch = async (action, extra = {}) => {
+    const raw = JSON.stringify({ action, sessionId: sid, ...extra });
+    const req = new EventEmitter();
+    req.method = 'POST';
+    req.url = '/dsh-goal/action';
+    req.headers = {
+      'host': '127.0.0.1:3000',
+      'sec-fetch-site': 'same-origin',
+    };
+    req.socket = { remoteAddress: '127.0.0.1' };
+
+    let resBody = '';
+    const res = {
+      statusCode: 200,
+      setHeader() {},
+      end(chunk) {
+        if (chunk) resBody += chunk;
+      },
+    };
+
+    const handlerPromise = routeHandler(req, res);
+    req.emit('data', Buffer.from(raw));
+    req.emit('end');
+    await handlerPromise;
+    return { status: res.statusCode, data: JSON.parse(resBody || '{}') };
+  };
+
+  // 1. action: start (creates goal in goalsService and initializes milestones)
+  const startRes = await dispatch('start', {
+    title: 'Deploy to Cloud',
+    milestones: ['Build assets', 'Run migrations', 'Start server'],
+  });
+  assert.equal(startRes.status, 200);
+  assert.equal(startRes.data.ok, true);
+  const startState = startRes.data.state || startRes.data;
+  assert.equal(startState.hasActiveGoal, true);
+  assert.equal(startState.title, 'Deploy to Cloud');
+  assert.equal(startState.milestones.length, 3);
+  assert.equal(startState.milestones[0].title, 'Build assets');
+
+  // 2. action: update_milestone (marks milestone 0 in_progress)
+  const updateRes1 = await dispatch('update_milestone', {
+    milestoneId: startState.milestones[0].id,
+    status: 'in_progress',
+  });
+  assert.equal(updateRes1.status, 200);
+  assert.equal(updateRes1.data.ok, true);
+  const updatedState1 = updateRes1.data.state || updateRes1.data;
+  assert.equal(updatedState1.milestones[0].status, 'in_progress');
+
+  // 3. action: update_milestone (completes milestone 0)
+  const updateRes2 = await dispatch('update_milestone', {
+    milestoneId: startState.milestones[0].id,
+    status: 'completed',
+  });
+  assert.equal(updateRes2.status, 200);
+  assert.equal(updateRes2.data.ok, true);
+  const updatedState2 = updateRes2.data.state || updateRes2.data;
+  assert.equal(updatedState2.milestones[0].status, 'completed');
+
+  // 4. action: nudge (delivers steering advice to companion agent)
+  resumedWith = null;
+  const nudgeRes = await dispatch('nudge', {
+    text: 'Please remember to minify bundles',
+    resume: true,
+  });
+  assert.equal(nudgeRes.status, 200);
+  assert.equal(nudgeRes.data.ok, true);
+  assert.equal(resumedWith?.id, sid);
+  assert.match(resumedWith?.prompt, /minify bundles/);
+
+  // 5. action: intervene (pauses and delivers corrective directive)
+  resumedWith = null;
+  const interveneRes = await dispatch('intervene', {
+    directive: 'Halt deployment, rollback migration first',
+  });
+  assert.equal(interveneRes.status, 200);
+  assert.equal(interveneRes.data.ok, true);
+  assert.equal(resumedWith?.id, sid);
+  assert.match(resumedWith?.prompt, /rollback migration first/);
+
+  // 6. action: pause (pauses native goal in goalsService and stops agent)
+  stoppedAgent = null;
+  const pauseRes = await dispatch('pause');
+  assert.equal(pauseRes.status, 200);
+  assert.equal(pauseRes.data.ok, true);
+  assert.equal(stoppedAgent, sid);
+  assert.equal(goalsMap.get(sid)?.phase, 'blocked');
+
+  // 7. action: resume (resumes native goal in goalsService and calls resumeActiveAgent)
+  resumedWith = null;
+  const resumeRes = await dispatch('resume');
+  assert.equal(resumeRes.status, 200);
+  assert.equal(resumeRes.data.ok, true);
+  assert.equal(resumedWith?.id, sid);
+  assert.equal(goalsMap.get(sid)?.phase, 'active');
+
+  // 8. action: cancel (cancels native goal)
+  stoppedAgent = null;
+  const cancelRes = await dispatch('cancel');
+  assert.equal(cancelRes.status, 200);
+  assert.equal(cancelRes.data.ok, true);
+  assert.equal(stoppedAgent, sid);
+  assert.equal(goalsMap.get(sid)?.phase, 'completed');
+
+  // 9. action: clear (clears companion addon state)
+  const clearRes = await dispatch('clear');
+  assert.equal(clearRes.status, 200);
+  assert.equal(clearRes.data.ok, true);
+  assert.equal(clearRes.data.state?.hasActiveGoal, false);
+});

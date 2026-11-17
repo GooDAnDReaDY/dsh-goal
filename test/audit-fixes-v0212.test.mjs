@@ -207,8 +207,10 @@ test('Issue #103: Unknown HTTP methods on known endpoints return 405 Method Not 
   assert.ok(parsed.error.includes('Method Not Allowed'));
 });
 
-test('Issue #104: lib/client.js does not contain hardcoded 0.2.3 fallback version', () => {
+test('Issue #104 & #201: lib/client.js does not contain hardcoded fallback versions (0.2.3, 0.2.12)', () => {
   const clientSrc = fs.readFileSync('lib/client.js', 'utf8');
   assert.ok(!clientSrc.includes("currentVersion: '0.2.3'"), 'updateState does not initialize with 0.2.3');
   assert.ok(!clientSrc.includes("|| '0.2.3'"), 'client version span does not fallback to 0.2.3');
+  assert.ok(!clientSrc.includes("'v0.2.12'"), 'client version span does not fallback to v0.2.12');
+  assert.ok(!clientSrc.includes("'0.2.12'"), 'client does not contain hardcoded 0.2.12');
 });
