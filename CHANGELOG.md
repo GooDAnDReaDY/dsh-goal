@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.39] - 2026-11-17
+
+### Fixed
+- **Updater API Access Guard & Host Privacy (#205)**:
+  - Guarded `GET/HEAD /api/dsh-goal/update` with `isTrustedUpdateReadRequest(req, ctx)`: fail-closed 403 Forbidden on untrusted LAN/cross-site requests without connection authentication or `DSH_GOAL_AUTH_TOKEN`.
+  - Stripped `profileName` from update status responses to prevent leaking internal directory structures and profile identifiers.
+- **Optional Companion Peer Dependencies (#204)**:
+  - Declared `@deepseek-ai/dsh-goal: ^0.1.7-rc.2 || ^0.2.0-rc.1` and `@deepseek-ai/dsh-token-meter: ^0.1.7-rc.2 || ^0.2.0-rc.1` in `peerDependencies` with `peerDependenciesMeta.*.optional: true` to resolve package manager warnings.
+  - Added startup diagnostic logs indicating active mode (`companion`, `standalone`, or `standalone fallback`) and token meter presence.
+- **Dynamic Version Placeholder in Settings Card (#201)**:
+  - Replaced hardcoded version literal `v0.2.12` with placeholder `v…` in `src/client/90-settings-card.js`.
+  - Prevented premature rendering of the "Up to date" checkmark badge before receiving the verified version payload from the update endpoint.
+- **Companion Mode Lifecycle Parity & Test Suite (#196)**:
+  - Implemented companion lifecycle handlers in `lib/routes-actions.js` for `start` (with `initCompanionMilestones`), `pause` (`goalsService.block`), `resume` (`goalsService.update`), `cancel` (`goalsService.complete`), `nudge` (`resumeActiveAgent`), and `clear`.
+  - Fixed `MilestoneManager.completeMilestone` to assign `m.status = "completed"` alongside `m.completed = true` for visual status parity.
+  - Added comprehensive end-to-end companion execution test suite (`test/mode-parity-companion.test.mjs`).
+
 ## [0.2.38] - 2026-11-17
 
 ### Fixed
