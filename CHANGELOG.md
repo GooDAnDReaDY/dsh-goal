@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.2.40] - 2026-11-17
+
+### Fixed
+- **Client Bundle Size Budget & Modularity (#203)**:
+  - Enforced client bundle size limits in `scripts/build-client.mjs --check`: warning at >180 KB, failure at >200 KB.
+  - Added strict per-fragment line limit check (<600 lines) across all `src/client/*.js` files.
+  - Decomposed monolithic UI files into modular views (`src/client/49-modal-details-views.js`, `src/client/69-dock-banner-views.js`), compacted `20-styles.js` and `90-settings-card.js`. All 14 client fragments are now strictly below 570 lines (total lines reduced from 6,479 to 4,253).
+- **Design Token Consistency & Automated Audit (#202)**:
+  - Eliminated non-canonical token references (`--dsw-alias-state-brand-primary`, `--dsw-alias-state-danger-primary`, `--dsw-alias-text-primary`, `--dsw-alias-bg-sunken`, etc.) in favor of canonical DSH design tokens (`--dsw-alias-brand-primary`, `--dsw-alias-state-error-primary`, `--dsw-alias-label-primary`, `--dsw-alias-bg-layer-1/2/3`).
+  - Added automated token validation in `scripts/build-client.mjs --check` ensuring all `--dsw-alias-*` tokens adhere to the canonical DSH theme token specification.
+- **Modernized Design Contract & Tool Documentation (#197)**:
+  - Updated `docs/design/DESIGN.md`: reordered §2.3 (Settings Card) before §2.4 (Acceptance Gate); updated slot registrations to modern `plugins.item` and `plugins.row.config` (`pkg#rowId`), noting retirement of obsolete `settings.plugin.item`.
+  - Fully documented all 7 registered model tools (`goal_milestones`, `goal_checklist`, `goal_set_milestones`, `goal_update_progress`, `goal_finish`, `goal_ask_operator`, `goal_spawn_subgoal`).
+  - Added hygiene test in `test/repository-hygiene.test.mjs` verifying complete tool documentation and slot modernization.
+- **Multilingual Design Specification (#198)**:
+  - Authored comprehensive multilingual design documentation across English (`docs/design/DESIGN.md`), Russian (`docs/design/DESIGN.ru.md`), and Chinese (`docs/design/DESIGN.zh.md`).
+  - Linked design documentation from `README.md`, `README.ru.md`, and `README.zh.md`.
+  - Added automated hygiene test in `test/repository-hygiene.test.mjs` verifying existence and content integrity of all three language versions.
+
 ## [0.2.39] - 2026-11-17
 
 ### Fixed

@@ -22,6 +22,13 @@
   <a href="README.zh.md"><b>🇨🇳 中文说明</b></a>
 </p>
 
+<p align="center">
+  📄 <b>Design Contract:</b>
+  <a href="docs/design/DESIGN.md"><b>English</b></a> •
+  <a href="docs/design/DESIGN.ru.md"><b>Русский</b></a> •
+  <a href="docs/design/DESIGN.zh.md"><b>中文</b></a>
+</p>
+
 <!-- Обязательный блок поддержки проекта: локализуй текст под язык README -->
 <table align="center">
   <tr>
