@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.45] - 2026-11-19
+
+### Fixed
+- **Updater stays available when the manifest is unreadable (#215)**:
+  - `status()` no longer fails the whole request when the current version cannot be resolved: it returns `currentVersion: null` and `updateAvailable: false` instead of HTTP 503.
+  - Failure details are written to stderr (`console.error`) so they appear in the service journal; the namespaced logger remains for the UI.
+  - Added a regression test for a missing manifest.
+
 ## [0.2.44] - 2026-11-19
 
 ### Fixed
