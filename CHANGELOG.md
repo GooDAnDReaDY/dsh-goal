@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.41] - 2026-11-19
+
+### Fixed
+- **Plugin Activation Contract (#211)**:
+  - Restored the Cordis dependency declaration: `inject` is an array of service names. The previous `{ required, optional }` object was read by the loader as two service names, so DSH reported `pending (waiting for services: required, optional)` and the plugin never activated.
+  - Optional services (`goals`, `agents`, `tokenMeter`, `approvalGate`, `connection`) remain resolved at runtime through `safeService()`; `standaloneMode` still selects the standalone engine explicitly.
+  - Added `test/inject-contract.test.mjs` to pin the array shape and prevent the regression.
+
 ## [0.2.40] - 2026-11-17
 
 ### Fixed
