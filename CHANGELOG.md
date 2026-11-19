@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.42] - 2026-11-19
+
+### Fixed
+- **Republish after npm staged-publish residue**: 0.2.41 could not be published because npm returned `409 Cannot publish over previously staged version "0.2.41"` while the version was absent from the registry and `npm stage list` was empty (npm/cli#9889). No code changes; the release artifacts are identical to 0.2.41.
+
 ## [0.2.41] - 2026-11-19
 
 ### Fixed
