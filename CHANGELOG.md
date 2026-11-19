@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.44] - 2026-11-19
+
+### Fixed
+- **Updater manifest resolution (#215)**:
+  - `GET /api/dsh-goal/update` returned 503 after activation because `currentVersion()` read `new URL('../package.json', import.meta.url)`, which does not resolve to the installed package under the DSH loader.
+  - The version is now resolved through a fallback chain: `manifestPath`, `fileURLToPath(manifestUrl)`, `<profileDir>/node_modules/<pkg>/package.json`, and `createRequire(<profile>/package.json).resolve(...)`.
+  - Updater failures are logged through the namespaced `ctx.logger('goal')` instead of an unavailable `.warn` on the logger function.
+  - Added `test/updater-manifest.test.mjs` with a temporary profile and an unusable `manifestUrl`.
+
 ## [0.2.43] - 2026-11-19
 
 ### Fixed
