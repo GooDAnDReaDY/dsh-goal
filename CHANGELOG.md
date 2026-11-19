@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.43] - 2026-11-19
+
+### Fixed
+- **Cordis activation on DSH 0.2.2 (#211)**:
+  - Removed the direct `ctx.goalEngine` assignment. Cordis 4 refuses to set an undeclared context property (`cannot set property "goalEngine" without provide`), which aborted activation once the inject contract was fixed.
+  - `registerTools` now receives the GoalEngine explicitly; the operator and sub-goal tools no longer read `ctx.goalEngine`.
+  - Added `test/cordis-activation.test.mjs` with a sealed context and updated the mode-parity test to assert the engine returned by `apply()`.
+
 ## [0.2.42] - 2026-11-19
 
 ### Fixed
