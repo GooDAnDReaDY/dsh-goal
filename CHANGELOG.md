@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.46] - 2026-11-19
+
+### Fixed
+- **Updater GET access guard (#215)**:
+  - `isTrustedUpdateReadRequest` read `ctx.connection` directly, and Cordis throws `cannot get property "connection" without inject` for an undeclared service. Every `GET /api/dsh-goal/update` therefore ended in the handler's 503 branch.
+  - The connection service is now resolved through `ctx.reflect.get('connection', false)` inside a guard that tolerates a throwing getter.
+  - Added `test/updater-connection.test.mjs` covering a throwing `connection` getter with and without `reflect`.
+
 ## [0.2.45] - 2026-11-19
 
 ### Fixed
